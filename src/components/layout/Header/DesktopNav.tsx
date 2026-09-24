@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FocusEvent } from "react";
 import type { NavItem } from "@/types/navigation";
+import { cn } from "@/lib/utils";
 import { NavItemTrigger, NavItemLink } from "./NavItem";
 import { MegaMenu } from "./MegaMenu";
 import { DropdownMenu } from "./DropdownMenu";
@@ -10,6 +11,7 @@ import { navPanels } from "./menus";
 
 interface DesktopNavProps {
   items: NavItem[];
+  className?: string;
 }
 
 /** Delay before a hover-opened menu closes, so moving the pointer to the panel doesn't flicker. */
@@ -19,7 +21,7 @@ function panelId(label: string) {
   return `nav-panel-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 }
 
-export function DesktopNav({ items }: DesktopNavProps) {
+export function DesktopNav({ items, className }: DesktopNavProps) {
   const [openLabel, setOpenLabel] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -72,7 +74,7 @@ export function DesktopNav({ items }: DesktopNavProps) {
     <nav
       ref={navRef}
       aria-label="Primary"
-      className="hidden items-center xl:flex"
+      className={cn("hidden items-center xl:flex", className)}
       onMouseEnter={cancelClose}
       onMouseLeave={scheduleClose}
       onBlur={handleBlur}

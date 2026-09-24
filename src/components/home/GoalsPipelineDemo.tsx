@@ -21,9 +21,8 @@ import { MouseCursor } from "@/components/dashboard/MouseCursor";
 interface Column {
   label: string;
   count: number;
+  /** Lakh format (e.g. ₹18.5L) at every screen size. */
   totalValue: string;
-  /** Compact form shown on phones, where columns are ~55px wide. */
-  shortValue: string;
   trend: string;
   trendUp: boolean;
   headerBg: string;
@@ -35,8 +34,7 @@ const baseColumns: Column[] = [
   {
     label: "New Leads",
     count: 12,
-    totalValue: "₹18,50,000",
-    shortValue: "₹18.5L",
+    totalValue: "₹18.5L",
     trend: "12%",
     trendUp: true,
     headerBg: "bg-brand-purple-light",
@@ -49,8 +47,7 @@ const baseColumns: Column[] = [
   {
     label: "Qualified",
     count: 9,
-    totalValue: "₹12,40,000",
-    shortValue: "₹12.4L",
+    totalValue: "₹12.4L",
     trend: "8%",
     trendUp: true,
     headerBg: "bg-violet-100",
@@ -63,8 +60,7 @@ const baseColumns: Column[] = [
   {
     label: "Proposal",
     count: 7,
-    totalValue: "₹9,75,000",
-    shortValue: "₹9.75L",
+    totalValue: "₹9.75L",
     trend: "15%",
     trendUp: true,
     headerBg: "bg-sky-100",
@@ -74,8 +70,7 @@ const baseColumns: Column[] = [
   {
     label: "Negotiation",
     count: 4,
-    totalValue: "₹6,30,000",
-    shortValue: "₹6.3L",
+    totalValue: "₹6.3L",
     trend: "5%",
     trendUp: false,
     headerBg: "bg-amber-100",
@@ -85,8 +80,7 @@ const baseColumns: Column[] = [
   {
     label: "Won",
     count: 10,
-    totalValue: "₹22,80,000",
-    shortValue: "₹22.8L",
+    totalValue: "₹22.8L",
     trend: "20%",
     trendUp: true,
     headerBg: "bg-emerald-100",
@@ -232,7 +226,7 @@ export function GoalsPipelineDemo() {
             ? "🎉 Deal Won! Aarav Singh closed for ₹1.7L"
             : cardVisible
               ? `Aarav Singh is now in ${STAGE_LABELS[colIndex]}`
-              : `${totalLeads} active leads worth ₹69,75,000 in the pipeline`}
+              : `${totalLeads} active leads worth ₹69.75L in the pipeline`}
         </span>
       </div>
 
@@ -256,8 +250,7 @@ export function GoalsPipelineDemo() {
               <p className="text-[9px] text-slate-400 sm:text-[10px]">Total Value</p>
               <div className="flex items-center gap-0.5 sm:gap-1">
                 <p className="text-[11px] font-bold whitespace-nowrap text-brand-text sm:text-sm">
-                  <span className="sm:hidden">{col.shortValue}</span>
-                  <span className="hidden sm:inline">{col.totalValue}</span>
+                  {col.totalValue}
                 </p>
                 {col.trendUp ? (
                   <TrendingUp className="size-2.5 shrink-0 text-emerald-500 sm:size-3" aria-hidden />

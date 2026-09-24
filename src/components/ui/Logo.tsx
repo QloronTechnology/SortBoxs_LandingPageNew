@@ -11,7 +11,7 @@ interface LogoProps {
   height?: number;
 }
 
-export function Logo({ className, width = 168, height = 52 }: LogoProps) {
+export function Logo({ className, width = 246, height = 55 }: LogoProps) {
   return (
     <Link href={routes.home} className={cn("inline-flex items-center", className)}>
       <Image

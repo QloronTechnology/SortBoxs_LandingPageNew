@@ -91,29 +91,30 @@ export function AiMegaMenu({ onNavigate }: NavPanelContentProps) {
         </div>
       </div>
 
-      {/* Bottom strip: AI partners + trust points */}
-      <div className={cn("mt-4 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-2xl px-6 py-4", stripBg)}>
-        <div className="flex items-center gap-6">
-          <div>
-            <p className="text-sm font-semibold text-brand-text">{strip.partner.title}</p>
-            <p className="mt-0.5 text-xs text-brand-muted">{strip.partner.description}</p>
-          </div>
-          <span className="hidden h-10 w-px bg-brand-purple/15 2xl:block" aria-hidden />
-          <Image
-            src={strip.partnerLogos.src}
-            alt={strip.partnerLogos.alt}
-            width={strip.partnerLogos.width}
-            height={strip.partnerLogos.height}
-            className="h-8 w-auto"
-          />
+      {/* Bottom strip: partner text | partner logos | two trust points — one row at every desktop width. */}
+      <div
+        className={cn(
+          "mt-4 grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-6 rounded-2xl px-6 py-4 3xl:gap-10",
+          stripBg
+        )}
+      >
+        <div className="min-w-0 border-r border-brand-purple/15 pr-6">
+          <p className="text-sm font-semibold text-brand-text">{strip.partner.title}</p>
+          <p className="mt-0.5 text-xs text-brand-muted">{strip.partner.description}</p>
         </div>
-
+        <Image
+          src={strip.partnerLogos.src}
+          alt={strip.partnerLogos.alt}
+          width={strip.partnerLogos.width}
+          height={strip.partnerLogos.height}
+          className="h-7 w-auto 3xl:h-8"
+        />
         {strip.points.map(({ title, description, icon: Icon }) => (
           <div key={title} className="flex items-center gap-3">
             <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-brand-purple/25 bg-white text-brand-purple">
               <Icon className="size-5" aria-hidden />
             </span>
-            <span>
+            <span className="max-w-[11rem] 3xl:max-w-none">
               <span className="block text-sm font-semibold text-brand-text">{title}</span>
               <span className="block text-xs text-brand-muted">{description}</span>
             </span>

@@ -4,6 +4,7 @@ import { platformMobileSections } from "@/data/menus/platformMenu";
 import { solutionsMobileSections } from "@/data/menus/solutionsMenu";
 import { industriesMobileSections } from "@/data/menus/industriesMenu";
 import { aiMobileSections } from "@/data/menus/aiMenu";
+import { resourcesMobileSections } from "@/data/menus/resourcesMenu";
 
 export const navigation: NavItem[] = [
   {
@@ -33,20 +34,9 @@ export const navigation: NavItem[] = [
   },
   {
     label: "Resources",
-    type: "dropdown",
-    columns: [
-      {
-        heading: "Learn",
-        items: [
-          { label: "Blog", href: routes.resources.blog },
-          { label: "Guides", href: routes.resources.guides },
-          { label: "Webinars", href: routes.resources.webinars },
-          { label: "Case Studies", href: routes.resources.caseStudies },
-          { label: "Help Center", href: routes.resources.helpCenter },
-          { label: "API Documentation", href: routes.resources.apiDocumentation },
-        ],
-      },
-    ],
+    type: "panel",
+    panel: "resources",
+    columns: resourcesMobileSections,
   },
   {
     label: "Pricing",

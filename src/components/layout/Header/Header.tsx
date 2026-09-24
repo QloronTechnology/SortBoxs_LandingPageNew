@@ -1,4 +1,3 @@
-import { Search } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
 import { navigation } from "@/config/navigation";
@@ -9,21 +8,15 @@ import { MobileNav } from "./MobileNav";
 export function Header() {
   return (
     <header className="border-b border-brand-border bg-white/95 backdrop-blur">
-      <div className="container-page flex h-20 items-center justify-between gap-4">
+      <div className="container-page flex h-20 items-center gap-4">
         {/* shrink-0: on crowded 1024–1280px headers the logo must not be squeezed. */}
         <Logo className="shrink-0" />
 
-        <DesktopNav items={navigation} />
+        {/* Nav sits next to the logo; the action buttons are pushed to the right edge. */}
+        <DesktopNav items={navigation} className="ml-4 3xl:ml-8" />
 
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2">
           <div className="hidden items-center gap-2 xl:flex">
-            <button
-              type="button"
-              aria-label="Search"
-              className="flex size-10 items-center justify-center rounded-lg text-brand-text hover:bg-brand-surface"
-            >
-              <Search className="size-5" aria-hidden />
-            </button>
             <Button href={routes.login} variant="ghost">
               Login
             </Button>

@@ -16,10 +16,10 @@ const sizes = {
   },
   // AI: fewer items, more breathing room.
   roomy: {
-    row: "gap-3.5 rounded-xl px-2 py-2",
+    row: "gap-3 rounded-xl px-2 py-1.5 3xl:gap-3.5 3xl:py-2",
     icon: "size-11",
     glyph: "size-5",
-    title: "text-[15px]",
+    title: "text-sm 3xl:text-[15px]",
     description: "text-[13px]",
     arrow: "text-brand-purple",
   },

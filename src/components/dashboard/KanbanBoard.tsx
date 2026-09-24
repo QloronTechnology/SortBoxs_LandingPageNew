@@ -126,7 +126,7 @@ export function KanbanBoard({ cardMoved }: KanbanBoardProps) {
         </div>
         <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
           <Wallet className="size-3 text-emerald-600" aria-hidden />
-          <span className="font-semibold text-brand-text">₹69,75,000</span> Pipeline Value
+          <span className="font-semibold text-brand-text">₹69.75L</span> Pipeline Value
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 export const assets = {
   brand: {
-    logo: "/assets/brand/sortboxs-logo.png",
+    logo: "/assets/brand/sortboxs-logo.svg", // 246×55 icon + wordmark, vector (crisp on retina)
   },
 
   hero: {

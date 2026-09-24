@@ -15,7 +15,7 @@ export interface NavColumn {
  */
 export type NavItemType = "mega-menu" | "dropdown" | "link" | "panel";
 
-export type NavPanelKey = "platform" | "solutions" | "industries" | "ai";
+export type NavPanelKey = "platform" | "solutions" | "industries" | "ai" | "resources";
 
 export interface NavItem {
   label: string;

@@ -56,13 +56,13 @@ export const aiMenu = {
     {
       heading: "AI Products",
       items: [
-        { label: "Sortboxs AI Assistant", description: "Your intelligent assistant across all modules.", href: routes.platform.ai, icon: Bot, tone: "purple" },
-        { label: "AI Interview", description: "AI-powered candidate screening and interviews.", href: routes.platform.aiInterview, icon: UserSearch, tone: "purple" },
-        { label: "AI Agents", description: "Automate repetitive tasks with intelligent agents.", href: "#", icon: Sparkles, tone: "purple" },
-        { label: "AI Analytics", description: "Turn data into insights with AI.", href: "#", icon: ChartColumn, tone: "purple" },
-        { label: "AI Search", description: "Find information across your business instantly.", href: "#", icon: Search, tone: "purple" },
+        { label: "Sortboxs AI Assistant", description: "Your intelligent assistant across all modules.", href: routes.platform.ai, icon: Bot, tone: "green" },
+        { label: "AI Interview", description: "AI-powered candidate screening and interviews.", href: routes.platform.aiInterview, icon: UserSearch, tone: "orange" },
+        { label: "AI Agents", description: "Automate repetitive tasks with intelligent agents.", href: "#", icon: Sparkles, tone: "sky" },
+        { label: "AI Analytics", description: "Turn data into insights with AI.", href: "#", icon: ChartColumn, tone: "teal" },
+        { label: "AI Search", description: "Find information across your business instantly.", href: "#", icon: Search, tone: "pink" },
         { label: "AI Workflows", description: "Build and automate workflows using AI.", href: "#", icon: Workflow, tone: "purple" },
-        { label: "AI Studio (Beta)", description: "Create, customize and deploy your own AI models.", href: "#", icon: Box, tone: "purple" },
+        { label: "AI Studio (Beta)", description: "Create, customize and deploy your own AI models.", href: "#", icon: Box, tone: "red" },
       ],
     },
     {

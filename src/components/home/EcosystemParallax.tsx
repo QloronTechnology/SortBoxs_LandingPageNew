@@ -186,7 +186,7 @@ export function EcosystemParallax({ modules }: { modules: EcosystemModule[] }) {
               src={assets.brand.logo}
               alt="SortBoxs"
               width={246}
-              height={60}
+              height={55}
               className="h-auto w-[76%]"
             />
           </div>
