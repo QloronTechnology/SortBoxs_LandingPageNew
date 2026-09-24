@@ -1,0 +1,358 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171a4a;
+
+  /* SortBoxs brand tokens */
+  --color-brand-purple: #6c35f5;
+  --color-brand-purple-dark: #5626d1;
+  --color-brand-purple-light: #ede8fe;
+  --color-brand-navy: #17165c;
+  --color-brand-text: #171a4a;
+  --color-brand-muted: #6b6f8a;
+  --color-brand-surface: #f8f7ff;
+  --color-brand-border: #e6e4f7;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-brand-purple: var(--color-brand-purple);
+  --color-brand-purple-dark: var(--color-brand-purple-dark);
+  --color-brand-purple-light: var(--color-brand-purple-light);
+  --color-brand-navy: var(--color-brand-navy);
+  --color-brand-text: var(--color-brand-text);
+  --color-brand-muted: var(--color-brand-muted);
+  --color-brand-surface: var(--color-brand-surface);
+  --color-brand-border: var(--color-brand-border);
+
+  --container-page: 1760px;
+
+  /* Extra-wide desktops (design canvas is 1920px). */
+  --breakpoint-3xl: 106.25rem; /* 1700px */
+  --breakpoint-4xl: 112.5rem; /* 1800px */
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.container-page {
+  max-width: var(--container-page);
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .container-page {
+    padding-inline: 2rem;
+  }
+}
+
+@keyframes float-y {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(108 53 245 / 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgb(108 53 245 / 0);
+  }
+}
+
+@keyframes dash-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-float-y {
+  animation: float-y 4s ease-in-out infinite;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 22s linear infinite;
+}
+
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-slow-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(0.92);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.85;
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 18s linear infinite;
+}
+
+.animate-spin-slow-reverse {
+  animation: spin-slow-reverse 24s linear infinite;
+}
+
+.animate-spin-slower {
+  animation: spin-slow 34s linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Module highlights (home): animations start when the InView wrapper reports visibility. */
+@keyframes hl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hl-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes hl-bar-live {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.82);
+  }
+}
+
+@keyframes hl-flow-active {
+  0%, 18%, 100% {
+    background-color: var(--color-brand-purple-light);
+    box-shadow: 0 0 0 0 rgb(108 53 245 / 0);
+  }
+  6%, 12% {
+    background-color: #ddd2fd;
+    box-shadow: 0 0 0 3px rgb(108 53 245 / 0.18);
+  }
+}
+
+@keyframes hl-reveal-x {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes hl-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.hl-rise,
+.hl-step,
+.hl-dot {
+  opacity: 0;
+}
+
+.hl-bar {
+  transform: scaleY(0);
+  transform-origin: bottom;
+}
+
+.hl-reveal {
+  clip-path: inset(0 100% 0 0);
+}
+
+[data-inview="true"] .hl-rise {
+  animation: hl-rise 0.5s ease-out var(--d, 0s) forwards;
+}
+
+[data-inview="true"] .hl-bar {
+  animation:
+    hl-grow 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0s) forwards,
+    hl-bar-live 3.2s ease-in-out calc(var(--d, 0s) + 1.4s) infinite;
+}
+
+[data-inview="true"] .hl-step {
+  animation:
+    hl-rise 0.5s ease-out var(--d, 0s) forwards,
+    hl-flow-active 6s ease-in-out calc(var(--i) * 1s + 2s) infinite;
+}
+
+[data-inview="true"] .hl-reveal {
+  animation: hl-reveal-x 1.6s ease-out 0.2s forwards;
+}
+
+[data-inview="true"] .hl-dot {
+  animation: hl-pop 0.4s ease-out var(--d, 0s) forwards;
+}
+
+/* Header mega panel entrance. */
+@keyframes mega-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mega-panel-in {
+  animation: mega-panel-in 180ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mega-panel-in {
+    animation: none;
+  }
+}
+
+/* Cookie banner / preferences dialog entrance. */
+@keyframes cookie-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cookie-banner-in {
+  animation: cookie-banner-in 350ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Ecosystem feature card pop-in. */
+@keyframes card-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* Footer CTA tagline: hand-written reveal, then a gentle float. */
+@keyframes tagline-write {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.4;
+  }
+  to {
+    clip-path: inset(0 -5% 0 0);
+    opacity: 1;
+  }
+}
+
+.tagline-write {
+  clip-path: inset(0 100% 0 0);
+}
+
+[data-inview="true"] .tagline-write {
+  animation:
+    tagline-write 1.8s cubic-bezier(0.55, 0, 0.3, 1) 0.3s forwards,
+    float-y 4s ease-in-out 2.1s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tagline-write,
+  [data-inview="true"] .tagline-write {
+    animation: none;
+    clip-path: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hl-rise,
+  .hl-dot,
+  .hl-bar,
+  .hl-step,
+  .hl-reveal,
+  [data-inview="true"] :is(.hl-rise, .hl-dot, .hl-bar, .hl-step, .hl-reveal) {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+  }
+}
