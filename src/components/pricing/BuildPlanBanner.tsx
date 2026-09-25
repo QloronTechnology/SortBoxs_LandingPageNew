@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { InView } from "@/components/ui/InView";
 import { PlanBuilderDemo } from "./PlanBuilderDemo";
+import { CheckoutTrigger } from "@/components/checkout/CheckoutTrigger";
 import { buildPlanBanner } from "@/data/pricing";
 
 const delay = (ms: number) => ({ "--delay": `${ms}ms` }) as CSSProperties;
@@ -43,13 +44,10 @@ export function BuildPlanBanner() {
               {description}
             </p>
             <div className="bp-rise mt-5 flex flex-wrap gap-3 sm:gap-4" style={delay(320)}>
-              <Link
-                href={primary.href}
-                className="group inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-brand-purple shadow-lg shadow-black/10 transition-all outline-none hover:-translate-y-0.5 hover:bg-white/95 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white sm:text-base"
-              >
+              <CheckoutTrigger className="group inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-brand-purple shadow-lg shadow-black/10 transition-all outline-none hover:-translate-y-0.5 hover:bg-white/95 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white sm:text-base">
                 {primary.label}
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden />
-              </Link>
+              </CheckoutTrigger>
               <Link
                 href={secondary.href}
                 className="group inline-flex items-center gap-2 rounded-lg border border-white/80 px-5 py-2.5 text-sm font-semibold text-white transition-all outline-none hover:-translate-y-0.5 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white sm:text-base"

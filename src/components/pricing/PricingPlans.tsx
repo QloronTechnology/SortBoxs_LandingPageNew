@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { pricingPlans, yearlySavingsLabel, type BillingCycle, type PricingPlan } from "@/data/pricing";
-import { cn } from "@/lib/utils";
+import { cn, formatINR } from "@/lib/utils";
+import { CheckoutTrigger } from "@/components/checkout/CheckoutTrigger";
 
 const cycles: { value: BillingCycle; label: string }[] = [
   { value: "monthly", label: "Monthly" },
@@ -86,8 +87,14 @@ function PlanCard({
   onActivate: () => void;
   onDeactivate: () => void;
 }) {
-  const { name, description, icon: Icon, price, features, cta, popular } = plan;
+  const { id, name, description, icon: Icon, price, features, cta, popular } = plan;
   const isStarter = name === "Starter";
+  const ctaClass = cn(
+    "mt-auto flex items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60",
+    isStarter
+      ? "border-brand-purple bg-brand-purple text-white hover:bg-brand-purple-dark"
+      : "border-brand-purple text-brand-purple hover:bg-brand-purple-light"
+  );
 
   return (
     <div
@@ -124,7 +131,7 @@ function PlanCard({
       <p className="mt-3 flex flex-wrap items-baseline gap-x-2">
         {price ? (
           <>
-            <span className="text-4xl font-bold text-brand-purple lg:text-3xl 2xl:text-4xl">{price[cycle]}</span>
+            <span className="text-4xl font-bold text-brand-purple lg:text-3xl 2xl:text-4xl">{formatINR(price[cycle])}</span>
             <span className="text-sm text-brand-muted">/ user / {cycle === "monthly" ? "month" : "year"}</span>
           </>
         ) : (
@@ -142,17 +149,16 @@ function PlanCard({
         ))}
       </ul>
 
-      <Link
-        href={cta.href}
-        className={cn(
-          "mt-auto flex items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60",
-          isStarter
-            ? "border-brand-purple bg-brand-purple text-white hover:bg-brand-purple-dark"
-            : "border-brand-purple text-brand-purple hover:bg-brand-purple-light"
-        )}
-      >
-        {cta.label}
-      </Link>
+      {/* Priced plans open the checkout drawer with this plan and the cycle shown; Enterprise links out. */}
+      {cta.href ? (
+        <Link href={cta.href} className={ctaClass}>
+          {cta.label}
+        </Link>
+      ) : (
+        <CheckoutTrigger plan={id} cycle={cycle} className={ctaClass}>
+          {cta.label}
+        </CheckoutTrigger>
+      )}
     </div>
   );
 }

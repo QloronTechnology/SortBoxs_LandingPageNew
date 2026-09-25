@@ -32,13 +32,16 @@ import type { MenuTone } from "@/data/menus/types";
 export type BillingCycle = "monthly" | "yearly";
 
 export interface PricingPlan {
+  /** Used in the checkout (`#checkout=<id>`). */
+  id: string;
   name: string;
   description: string;
   icon: LucideIcon;
-  /** Per-user price by billing cycle, pre-formatted in INR. Omit for "Let's Talk" plans. */
-  price?: Record<BillingCycle, string>;
+  /** Per-user price in INR: per month (monthly) and per year (yearly). Omit for "Let's Talk" plans. */
+  price?: Record<BillingCycle, number>;
   features: string[];
-  cta: { label: string; href: string };
+  /** No `href`: the button opens the checkout drawer for this plan. */
+  cta: { label: string; href?: string };
   popular?: boolean;
 }
 
@@ -59,27 +62,30 @@ export const yearlySavingsLabel = "Save up to 20%";
 
 export const pricingPlans: PricingPlan[] = [
   {
+    id: "starter",
     name: "Starter",
     description: "For small teams getting started.",
     icon: Send,
-    price: { monthly: "₹4,999", yearly: "₹54,999" },
+    price: { monthly: 4999, yearly: 54999 },
     features: ["CRM", "Contacts", "Leads", "Tasks", "Basic Reports"],
-    cta: { label: "Start Free Trial", href: routes.signup },
+    cta: { label: "Get Started" },
   },
   {
+    id: "professional",
     name: "Professional",
     description: "For growing businesses.",
     icon: Crown,
-    price: { monthly: "₹7,999", yearly: "₹89,999" },
+    price: { monthly: 7999, yearly: 89999 },
     features: ["CRM", "Sales", "Marketing", "Customer Support", "Automation", "Reports", "Dashboards"],
-    cta: { label: "Get Started", href: routes.signup },
+    cta: { label: "Get Started" },
     popular: true,
   },
   {
+    id: "business",
     name: "Business",
     description: "For established organizations.",
     icon: Building2,
-    price: { monthly: "₹14,999", yearly: "₹1,75,999" },
+    price: { monthly: 14999, yearly: 175999 },
     features: [
       "CRM",
       "Sales",
@@ -92,9 +98,10 @@ export const pricingPlans: PricingPlan[] = [
       "Inventory",
       "AI Features",
     ],
-    cta: { label: "Get Started", href: routes.signup },
+    cta: { label: "Get Started" },
   },
   {
+    id: "enterprise",
     name: "Enterprise",
     description: "For large organizations with custom needs.",
     icon: Layers,
@@ -165,7 +172,8 @@ export const buildPlanBanner = {
   eyebrow: "Flexible. Scalable. Yours.",
   title: "Build your own Sortboxs plan",
   description: "Choose only the modules you need.",
-  primary: { label: "Customize Your Plan", href: "#" },
+  /** Opens the checkout drawer for a custom plan (CheckoutTrigger). */
+  primary: { label: "Customize Your Plan" },
   secondary: { label: "Talk to Our Experts", href: routes.company.contact },
 };
 

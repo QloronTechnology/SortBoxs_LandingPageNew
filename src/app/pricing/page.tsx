@@ -4,6 +4,7 @@ import { PricingPlans } from "@/components/pricing/PricingPlans";
 import { PricingModules } from "@/components/pricing/PricingModules";
 import { PlanComparison } from "@/components/pricing/PlanComparison";
 import { BuildPlanBanner } from "@/components/pricing/BuildPlanBanner";
+import { CheckoutDrawerHost } from "@/components/checkout/CheckoutDrawer";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -19,6 +20,8 @@ export default function PricingPage() {
       <PricingModules />
       <PlanComparison />
       <BuildPlanBanner />
+      {/* Opened by the plan cards' "Get Started" and "Customize Your Plan". */}
+      <CheckoutDrawerHost />
     </div>
   );
 }

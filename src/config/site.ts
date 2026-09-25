@@ -5,6 +5,8 @@ export const site = {
     "SortBoxs connects CRM, Sales, HRMS, Service, Finance, Projects, Procurement, Inventory, Analytics and AI in one intelligent business platform.",
   url: "https://sortboxs.com",
   announcement: "Trusted by 10,000+ business worldwide",
+  /** From the checkout designs' footer ("Need Help?"). */
+  supportEmail: "support@sortboxs.com",
   topLinks: [
     { label: "About US", href: "/company/about" },
     { label: "Careers", href: "/company/careers" },
