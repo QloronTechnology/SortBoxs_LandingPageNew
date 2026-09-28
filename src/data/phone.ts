@@ -3,7 +3,7 @@ import { billingCountries } from "@/data/billingTax";
 /**
  * Phone numbers are stored as a country (for the dial code) + the national number as digits only.
  * Digit ranges are for the national significant number (no leading trunk "0"). Shared by the checkout
- * form and the /api/checkout routes, so both apply exactly the same rules.
+ * form; the subscription checkout sends the national number as `phoneNumber`.
  */
 
 export interface PhoneCountry {

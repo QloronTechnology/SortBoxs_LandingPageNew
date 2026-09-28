@@ -7,13 +7,27 @@ interface NavItemTriggerProps {
   ref?: Ref<HTMLButtonElement>;
   label: string;
   isOpen: boolean;
+  /** The current page belongs to this tab's section. */
+  isActive?: boolean;
   /** id of the menu/panel this trigger opens (for aria-controls). */
   controls: string;
   onClick: (event: MouseEvent<HTMLButtonElement>) => void;
   onMouseEnter: () => void;
 }
 
-export function NavItemTrigger({ ref, label, isOpen, controls, onClick, onMouseEnter }: NavItemTriggerProps) {
+/** Purple text with a purple underline: marks both the open tab and the current page's tab. */
+const highlighted =
+  "text-brand-purple after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:rounded-full after:bg-brand-purple";
+
+export function NavItemTrigger({
+  ref,
+  label,
+  isOpen,
+  isActive = false,
+  controls,
+  onClick,
+  onMouseEnter,
+}: NavItemTriggerProps) {
   return (
     <button
       ref={ref}
@@ -26,9 +40,9 @@ export function NavItemTrigger({ ref, label, isOpen, controls, onClick, onMouseE
       className={cn(
         "relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-[15px] font-medium text-brand-text transition-colors outline-none hover:text-brand-purple",
         "focus-visible:ring-2 focus-visible:ring-brand-purple/60",
-        // Open: light purple tab with a purple underline.
-        isOpen &&
-          "bg-brand-purple-light text-brand-purple after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:rounded-full after:bg-brand-purple"
+        (isOpen || isActive) && highlighted,
+        // Open: light purple tab as well.
+        isOpen && "bg-brand-purple-light"
       )}
     >
       {label}
@@ -40,13 +54,18 @@ export function NavItemTrigger({ ref, label, isOpen, controls, onClick, onMouseE
 interface NavItemLinkProps {
   label: string;
   href: string;
+  isActive?: boolean;
 }
 
-export function NavItemLink({ label, href }: NavItemLinkProps) {
+export function NavItemLink({ label, href, isActive = false }: NavItemLinkProps) {
   return (
     <Link
       href={href}
-      className="rounded-lg px-3 py-2 text-[15px] font-medium text-brand-text transition-colors outline-none hover:text-brand-purple focus-visible:ring-2 focus-visible:ring-brand-purple/60"
+      aria-current={isActive ? "page" : undefined}
+      className={cn(
+        "relative rounded-lg px-3 py-2 text-[15px] font-medium text-brand-text transition-colors outline-none hover:text-brand-purple focus-visible:ring-2 focus-visible:ring-brand-purple/60",
+        isActive && highlighted
+      )}
     >
       {label}
     </Link>

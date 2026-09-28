@@ -43,4 +43,6 @@ next-env.d.ts
 # Claude
 .claude/
 !.env.example
+!.env.development
+!.env.production
 

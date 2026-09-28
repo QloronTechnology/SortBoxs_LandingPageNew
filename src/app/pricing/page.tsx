@@ -9,7 +9,7 @@ import { CheckoutDrawerHost } from "@/components/checkout/CheckoutDrawer";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Plans that scale with your business — Starter, Professional, Business and Enterprise, billed monthly or yearly.",
+    "Plans that scale with your business, billed monthly or yearly — or build your own from the modules you need.",
 };
 
 export default function PricingPage() {

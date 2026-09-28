@@ -11,6 +11,7 @@ import { cn, formatINR } from "@/lib/utils";
 import { useCheckout } from "./CheckoutProvider";
 import { findPhoneCountry, formatPhone } from "@/data/phone";
 import { effectiveMethod } from "./BillingStep";
+import { Flag } from "./Combobox";
 
 /**
  * Step 3 — "Review your order": plan lines, billing details and payment method, each with Edit, plus the
@@ -118,8 +119,9 @@ export function ReviewStep({
           <Detail label="Billing Address" wide>
             {billing.line1}
             {regionLine && <span className="block">{regionLine}</span>}
-            <span className="block">
-              {totals.country.flag} {totals.country.name}
+            <span className="flex items-center gap-2">
+              <Flag code={totals.country.code} />
+              {totals.country.name}
             </span>
           </Detail>
           <Detail label="Purchase Type">{billing.customerType === "business" ? "Business (Registered)" : "Individual"}</Detail>

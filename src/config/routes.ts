@@ -8,7 +8,7 @@ export const routes = {
 
   platform: {
     all: "/platform",
-    crm: "/crm",
+    crm: "/crm-landing",
     sales: "/sales",
     service: "/service",
     hrms: "/hrms",

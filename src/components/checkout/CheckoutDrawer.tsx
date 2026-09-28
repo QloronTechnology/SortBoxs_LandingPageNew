@@ -5,9 +5,10 @@ import { createPortal } from "react-dom";
 import { ArrowRight, FileText, LoaderCircle, LockKeyhole, X } from "lucide-react";
 import { checkoutHero, checkoutSteps, type CheckoutStepId } from "@/data/checkout";
 import { formatINR } from "@/lib/utils";
-import { CheckoutProvider, clearSavedCheckout, useCheckout } from "./CheckoutProvider";
-import { payWithRazorpay } from "./razorpayCheckout";
-import { requestInvoice } from "./invoiceRequest";
+import { usePricingPlans } from "@/components/pricing/usePricingPlans";
+import { CheckoutProvider, useCheckout } from "./CheckoutProvider";
+import { useSubscriptionCheckout } from "./useSubscriptionCheckout";
+import { checkoutDemo } from "./checkoutApi";
 import { effectiveMethod } from "./BillingStep";
 import { closeCheckout, parseCheckoutHash, syncCheckoutHash, useLocationHash } from "./checkoutRequest";
 import { CheckoutStepper } from "./CheckoutStepper";
@@ -35,7 +36,11 @@ export function CheckoutDrawerHost() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
+  // A plan checkout (#checkout=<id>) needs the backend plans first; until then the drawer waits. If they
+  // can't load, it opens as a custom plan rather than not at all.
+  const plans = usePricingPlans();
   if (!request) return null;
+  if (request.plan && plans.status === "loading") return null;
   return createPortal(
     <CheckoutProvider key={session} request={request}>
       <DrawerPanel onClose={closeCheckout} />
@@ -47,12 +52,7 @@ export function CheckoutDrawerHost() {
 function DrawerPanel({ onClose }: { onClose: () => void }) {
   const { state, totals, ready } = useCheckout();
   const [step, setStep] = useState<CheckoutStepId>("configure");
-  const [payment, setPayment] = useState<
-    | { phase: "idle" | "paying" }
-    | { phase: "error"; message: string }
-    | { phase: "paid"; orderId: string; paymentId: string; amount: number }
-    | { phase: "invoiced"; requestId: string; amount: number; period: "month" | "year"; email: string }
-  >({ phase: "idle" });
+  const { payment, pay } = useSubscriptionCheckout();
   const done = payment.phase === "paid" || payment.phase === "invoiced";
   const invoice = effectiveMethod(state, totals) === "invoice";
   const panel = useRef<HTMLDivElement>(null);
@@ -87,31 +87,10 @@ function DrawerPanel({ onClose }: { onClose: () => void }) {
     if (ready) syncCheckoutHash({ plan: state.plan, cycle: state.plan ? state.cycle : null });
   }, [ready, state.plan, state.cycle]);
 
-  const pay = async () => {
-    setPayment({ phase: "paying" });
-
-    // Invoice / bank transfer: no online payment — send the request, then show what happens next.
-    if (invoice) {
-      const request = await requestInvoice(state);
-      if (request.status === "requested") {
-        clearSavedCheckout();
-        setPayment({ phase: "invoiced", ...request });
-        body.current?.scrollTo({ top: 0 });
-      } else {
-        setPayment({ phase: "error", message: request.message });
-      }
-      return;
-    }
-
-    const result = await payWithRazorpay(state);
-    if (result.status === "paid") {
-      clearSavedCheckout();
-      setPayment({ phase: "paid", orderId: result.orderId, paymentId: result.paymentId, amount: result.amount });
-      body.current?.scrollTo({ top: 0 });
-    } else {
-      setPayment(result.status === "failed" ? { phase: "error", message: result.message } : { phase: "idle" });
-    }
-  };
+  // Paid or invoiced: show the confirmation from the top.
+  useEffect(() => {
+    if (done) body.current?.scrollTo({ top: 0 });
+  }, [done]);
 
   const addModules = () => {
     if (step !== "configure") setStep("configure");
@@ -138,6 +117,14 @@ function DrawerPanel({ onClose }: { onClose: () => void }) {
         <header className="flex h-14 shrink-0 items-center justify-between gap-3 bg-brand-purple px-4 text-white sm:px-5">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <LockKeyhole className="size-5" aria-hidden /> Secure Checkout
+            {checkoutDemo && (
+              <span
+                title="Razorpay test mode, front-end only: no real money, payments aren't verified by a server."
+                className="rounded-full bg-amber-300 px-2 py-0.5 text-[11px] font-bold tracking-wide text-amber-950 uppercase"
+              >
+                Test mode
+              </span>
+            )}
           </p>
           <button
             type="button"

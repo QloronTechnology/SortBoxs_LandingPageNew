@@ -1,23 +1,142 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
-import { pricingPlans, yearlySavingsLabel, type BillingCycle, type PricingPlan } from "@/data/pricing";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, RotateCw } from "lucide-react";
+import { enterprisePlan, yearlySavingsLabel, type BillingCycle, type PricingPlan } from "@/data/pricing";
+import { routes } from "@/config/routes";
+import { loadPlans } from "@/lib/plansApi";
 import { cn, formatINR } from "@/lib/utils";
 import { CheckoutTrigger } from "@/components/checkout/CheckoutTrigger";
+import { usePricingPlans } from "./usePricingPlans";
 
 const cycles: { value: BillingCycle; label: string }[] = [
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
 ];
 
-/** Monthly/Yearly toggle (overlapping the hero's bottom edge) plus the four plan cards. */
+/** The design's row: 4 cards (3 plans + Enterprise), centred when there are fewer. */
+const cardWidth = "w-full md:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-3.75rem)/4)]";
+
+/** Backend plans that fit next to Enterprise on desktop; more than this and they become a slider. */
+const visiblePlans = 3;
+
+/**
+ * Horizontal slider for the backend plans: scroll-snap (swipe on touch, trackpad on desktop) with
+ * previous/next buttons that appear only when there's more to see. Shows 3 cards on desktop, 2 on
+ * tablets and 1 (with the next one peeking) on phones.
+ */
+function PlanSlider({ label, children }: { label: string; children: ReactNode[] }) {
+  const track = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ start: true, end: false });
+
+  const measure = () => {
+    const el = track.current;
+    if (!el) return;
+    setEdges({ start: el.scrollLeft <= 1, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 });
+  };
+
+  useEffect(() => {
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const slide = (direction: 1 | -1) => {
+    const el = track.current;
+    const card = el?.firstElementChild as HTMLElement | null;
+    if (!el || !card) return;
+    const gap = parseFloat(getComputedStyle(el).columnGap) || 0;
+    el.scrollBy({ left: direction * (card.offsetWidth + gap), behavior: "smooth" });
+  };
+
+  const arrow =
+    "absolute top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-brand-border bg-white text-brand-purple shadow-md transition-opacity outline-none hover:bg-brand-purple-light focus-visible:ring-2 focus-visible:ring-brand-purple/60 disabled:pointer-events-none disabled:opacity-0";
+
+  return (
+    <div role="region" aria-roledescription="carousel" aria-label={label} className="relative min-w-0 flex-1">
+      <div
+        ref={track}
+        onScroll={measure}
+        className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pt-1 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {children.map((child, index) => (
+          <div key={index} className="w-[85%] shrink-0 snap-start md:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-2.5rem)/3)]">
+            {child}
+          </div>
+        ))}
+      </div>
+      <button type="button" aria-label="Previous plans" onClick={() => slide(-1)} disabled={edges.start} className={cn(arrow, "-left-3 sm:-left-5")}>
+        <ChevronLeft className="size-5" aria-hidden />
+      </button>
+      <button type="button" aria-label="More plans" onClick={() => slide(1)} disabled={edges.end} className={cn(arrow, "-right-3 sm:-right-5")}>
+        <ChevronRight className="size-5" aria-hidden />
+      </button>
+    </div>
+  );
+}
+
+/**
+ * The card's feature list at a fixed height (about 9 rows) so every card is the same size whatever the
+ * plan includes. Longer lists scroll inside the card; a fade and a "scroll for all" hint show there's more.
+ */
+function FeatureList({ features }: { features: string[] }) {
+  const list = useRef<HTMLUListElement>(null);
+  const [more, setMore] = useState(false);
+
+  const measure = () => {
+    const el = list.current;
+    if (el) setMore(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+  };
+
+  useEffect(measure, [features]);
+
+  const overflows = features.length > 9;
+  return (
+    <div className="mt-4 mb-6">
+      <ul
+        ref={list}
+        onScroll={measure}
+        tabIndex={overflows ? 0 : undefined}
+        aria-label={overflows ? `${features.length} included features` : undefined}
+        className={cn(
+          "flex h-[15.5rem] flex-col gap-2 overflow-y-auto overscroll-contain pr-1 outline-none [scrollbar-color:#d9d4f7_transparent] [scrollbar-width:thin] focus-visible:ring-2 focus-visible:ring-brand-purple/40",
+          more && "[mask-image:linear-gradient(to_bottom,black_78%,transparent)]"
+        )}
+      >
+        {features.map((feature) => (
+          <li key={feature} className="flex items-center gap-3 text-sm text-brand-text">
+            <Check className="size-4 shrink-0 text-brand-purple" strokeWidth={2.5} aria-hidden />
+            {feature}
+          </li>
+        ))}
+      </ul>
+      <p aria-hidden className={cn("mt-1.5 flex h-4 items-center gap-1 text-xs text-brand-muted transition-opacity", more ? "opacity-100" : "opacity-0")}>
+        <ChevronDown className="size-3.5 animate-bounce" />
+        Scroll to see all {features.length}
+      </p>
+    </div>
+  );
+}
+
+/** Monthly/Yearly toggle (overlapping the hero's bottom edge), the backend plans, then Enterprise. */
 export function PricingPlans() {
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
+  const plans = usePricingPlans();
+  const apiPlans = plans.status === "ready" ? plans.plans : [];
+  const allPlans = [...apiPlans, enterprisePlan];
   // The hovered/focused card is highlighted; with none, the "Most Popular" plan is.
   const [hovered, setHovered] = useState<string | null>(null);
-  const highlighted = hovered ?? pricingPlans.find((plan) => plan.popular)?.name;
+  const highlighted = hovered ?? allPlans.find((plan) => plan.popular)?.id;
+
+  const cardProps = (plan: PricingPlan, index: number) => ({
+    plan,
+    cycle,
+    primary: index === 0 && plan !== enterprisePlan,
+    highlighted: highlighted === plan.id,
+    onActivate: () => setHovered(plan.id),
+    onDeactivate: () => setHovered(null),
+  });
 
   return (
     <section className="bg-white pb-12">
@@ -54,44 +173,102 @@ export function PricingPlans() {
           </div>
         </div>
 
-        <div
-          className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4"
-          onMouseLeave={() => setHovered(null)}
-        >
-          {pricingPlans.map((plan) => (
-            <PlanCard
-              key={plan.name}
-              plan={plan}
-              cycle={cycle}
-              highlighted={highlighted === plan.name}
-              onActivate={() => setHovered(plan.name)}
-              onDeactivate={() => setHovered(null)}
-            />
-          ))}
+        <div className="mt-8" onMouseLeave={() => setHovered(null)} aria-busy={plans.status === "loading"}>
+          {apiPlans.length > visiblePlans ? (
+            // More plans than fit: the backend plans slide, Enterprise stays put on the right.
+            <div className="flex flex-col gap-5 lg:flex-row">
+              <PlanSlider label="Subscription plans">
+                {apiPlans.map((plan, index) => (
+                  <PlanCard key={plan.id} {...cardProps(plan, index)} className="h-full w-full" />
+                ))}
+              </PlanSlider>
+              {/* Same vertical padding as the slider track, so Enterprise lines up with the slides. */}
+              <div className={cn(cardWidth, "shrink-0 self-center pt-1 pb-3 lg:self-auto")}>
+                <PlanCard {...cardProps(enterprisePlan, -1)} className="h-full" />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap justify-center gap-5">
+              {plans.status === "loading" && [0, 1, 2].map((i) => <PlanCardSkeleton key={i} />)}
+              {plans.status === "error" && <PlansError />}
+              {allPlans.map((plan, index) => (
+                <PlanCard key={plan.id} {...cardProps(plan, index)} className={cardWidth} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
   );
 }
 
+/** Placeholder with the card's shape while the plans load. */
+function PlanCardSkeleton() {
+  return (
+    <div aria-hidden className={cn(cardWidth, "flex animate-pulse flex-col rounded-lg border border-brand-border bg-white p-5")}>
+      <span className="size-11 rounded-full bg-brand-purple-light" />
+      <span className="mt-4 h-5 w-32 rounded bg-brand-surface" />
+      <span className="mt-2 h-4 w-44 rounded bg-brand-surface" />
+      <span className="mt-4 h-8 w-28 rounded bg-brand-purple-light" />
+      <span className="mt-5 flex flex-col gap-2.5">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <span key={i} className="h-3.5 w-3/4 rounded bg-brand-surface" />
+        ))}
+      </span>
+      <span className="mt-8 h-10 rounded-lg bg-brand-surface" />
+    </div>
+  );
+}
+
+/** The plans couldn't be fetched: say so, offer a retry and a human. Enterprise still shows next to it. */
+function PlansError() {
+  return (
+    <div role="alert" className={cn(cardWidth, "flex flex-col items-center justify-center rounded-lg border border-dashed border-brand-border bg-white p-6 text-center lg:w-[calc((100%-3.75rem)*3/4+2.5rem)]")}>
+      <CircleAlert className="size-8 text-brand-purple" aria-hidden />
+      <p className="mt-3 text-lg font-semibold text-brand-text">We couldn&apos;t load our plans</p>
+      <p className="mt-1 max-w-sm text-sm text-brand-muted">Please check your connection and try again, or talk to our team for pricing.</p>
+      <div className="mt-4 flex flex-wrap justify-center gap-3">
+        <button
+          type="button"
+          onClick={() => loadPlans({ retry: true })}
+          className="flex items-center gap-2 rounded-lg bg-brand-purple px-4 py-2.5 text-sm font-semibold text-white outline-none hover:bg-brand-purple-dark focus-visible:ring-2 focus-visible:ring-brand-purple/60"
+        >
+          <RotateCw className="size-4" aria-hidden /> Try again
+        </button>
+        <Link
+          href={routes.company.contact}
+          className="rounded-lg border border-brand-purple px-4 py-2.5 text-sm font-semibold text-brand-purple outline-none hover:bg-brand-purple-light focus-visible:ring-2 focus-visible:ring-brand-purple/60"
+        >
+          Contact Sales
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function PlanCard({
   plan,
   cycle,
+  primary,
   highlighted,
   onActivate,
   onDeactivate,
+  className,
 }: {
   plan: PricingPlan;
   cycle: BillingCycle;
+  /** Filled purple button (the first plan), instead of outlined. */
+  primary: boolean;
   highlighted: boolean;
   onActivate: () => void;
   onDeactivate: () => void;
+  /** Width, set by the layout (centred row or slider). */
+  className?: string;
 }) {
   const { id, name, description, icon: Icon, price, features, cta, popular } = plan;
-  const isStarter = name === "Starter";
   const ctaClass = cn(
     "mt-auto flex items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60",
-    isStarter
+    primary
       ? "border-brand-purple bg-brand-purple text-white hover:bg-brand-purple-dark"
       : "border-brand-purple text-brand-purple hover:bg-brand-purple-light"
   );
@@ -102,6 +279,7 @@ function PlanCard({
       onFocus={onActivate}
       onBlur={onDeactivate}
       className={cn(
+        className,
         // 1px border everywhere; the highlight adds a 1px ring (no layout shift) for a 2px purple edge.
         "relative flex flex-col rounded-lg border bg-white p-5 transition-[border-color,background-color,box-shadow] duration-200",
         highlighted
@@ -139,15 +317,8 @@ function PlanCard({
         )}
       </p>
 
-      {/* mb-8 keeps a minimum gap; the CTA's mt-auto pins it to the card bottom so buttons align. */}
-      <ul className="mt-4 mb-6 flex flex-col gap-2">
-        {features.map((feature) => (
-          <li key={feature} className="flex items-center gap-3 text-sm text-brand-text">
-            <Check className="size-4 shrink-0 text-brand-purple" strokeWidth={2.5} aria-hidden />
-            {feature}
-          </li>
-        ))}
-      </ul>
+      {/* Fixed height, so all cards match; the CTA's mt-auto pins it to the card bottom. */}
+      <FeatureList features={features} />
 
       {/* Priced plans open the checkout drawer with this plan and the cycle shown; Enterprise links out. */}
       {cta.href ? (

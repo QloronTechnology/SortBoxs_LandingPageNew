@@ -27,6 +27,7 @@ import {
 import { formatRate } from "@/lib/tax";
 import { cn, formatINR } from "@/lib/utils";
 import { useCheckout, type CheckoutState, type CheckoutTotals, type PaymentMethodId } from "./CheckoutProvider";
+import { Combobox, Flag } from "./Combobox";
 
 /** Lets the drawer's "Continue to Review" validate this step (and reveal its errors). */
 export interface BillingStepHandle {
@@ -172,42 +173,27 @@ export function BillingStep({ ref }: { ref?: Ref<BillingStepHandle> }) {
       <Section index={2} title="Billing Address" subtitle="This information is used for invoicing and tax calculation.">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field id="bill-country" label="Country / Region" required>
-            <SelectBox>
-              <select
-                id="bill-country"
-                autoComplete="country"
-                value={state.country}
-                onChange={(e) => dispatch({ type: "setCountry", country: e.target.value })}
-                className={inputClass(undefined, "appearance-none pr-10")}
-              >
-                {billingCountries.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.flag} {c.name}
-                  </option>
-                ))}
-              </select>
-            </SelectBox>
+            <Combobox
+              id="bill-country"
+              value={state.country}
+              options={billingCountries.map((c) => ({ value: c.code, label: c.name, flag: c.code }))}
+              onChange={(country) => dispatch({ type: "setCountry", country })}
+              searchPlaceholder="Search country"
+            />
           </Field>
           {totals.country.regions && (
             <Field id="bill-region" label={totals.country.regionLabel ?? "Region"} required error={errorFor("bill-region")}>
-              <SelectBox>
-                <select
-                  id="bill-region"
-                  autoComplete="address-level1"
-                  value={state.region}
-                  onChange={(e) => dispatch({ type: "setRegion", region: e.target.value })}
-                  onBlur={() => touch("bill-region")}
-                  className={inputClass(errorFor("bill-region"), cn("appearance-none pr-10", !state.region && "text-brand-muted"))}
-                  {...describedBy("bill-region", errorFor("bill-region"))}
-                >
-                  <option value="" disabled>
-                    Select {(totals.country.regionLabel ?? "region").toLowerCase()}
-                  </option>
-                  {totals.country.regions.map((r) => (
-                    <option key={r.name}>{r.name}</option>
-                  ))}
-                </select>
-              </SelectBox>
+              <Combobox
+                id="bill-region"
+                value={state.region}
+                options={totals.country.regions.map((r) => ({ value: r.name, label: r.name }))}
+                onChange={(region) => dispatch({ type: "setRegion", region })}
+                onClose={() => touch("bill-region")}
+                placeholder={`Select ${(totals.country.regionLabel ?? "region").toLowerCase()}`}
+                searchPlaceholder={`Search ${(totals.country.regionLabel ?? "region").toLowerCase()}`}
+                invalid={!!errorFor("bill-region")}
+                describedBy={describedBy("bill-region", errorFor("bill-region"))["aria-describedby"]}
+              />
             </Field>
           )}
         </div>
@@ -411,36 +397,32 @@ function PhoneInput({ error, onBlur }: { error?: string; onBlur: () => void }) {
   return (
     <div
       className={cn(
-        "flex h-11 w-full overflow-hidden rounded-lg border bg-white focus-within:border-brand-purple focus-within:ring-2 focus-within:ring-brand-purple/30",
+        // No overflow-hidden: the country list has to open outside the field.
+        "flex h-11 w-full rounded-lg border bg-white focus-within:border-brand-purple focus-within:ring-2 focus-within:ring-brand-purple/30",
         error ? "border-red-400" : "border-brand-border"
       )}
     >
-      <div className="relative flex shrink-0 items-center gap-1.5 border-r border-brand-border bg-[#f7f6fe] pr-2 pl-3">
-        <span aria-hidden className="text-lg leading-none">
-          {country.flag}
-        </span>
-        <span aria-hidden className="text-[15px] font-medium text-brand-text tabular-nums">
-          +{country.dial}
-        </span>
-        <ChevronDown className="size-3.5 text-brand-muted" aria-hidden />
-        <select
-          aria-label="Country code"
-          autoComplete="tel-country-code"
-          value={country.code}
-          onChange={(e) => {
-            const next = findPhoneCountry(e.target.value);
-            // Re-fit the typed number to the new country's rules.
-            setBilling({ phoneCountry: next.code, phone: sanitizePhoneNumber(state.billing.phone, next) });
-          }}
-          className="absolute inset-0 cursor-pointer opacity-0"
-        >
-          {phoneCountries.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.flag} {c.name} (+{c.dial})
-            </option>
-          ))}
-        </select>
-      </div>
+      <Combobox
+        ariaLabel="Country code"
+        value={country.code}
+        options={phoneCountries.map((c) => ({ value: c.code, label: c.name, flag: c.code, meta: `+${c.dial}` }))}
+        onChange={(code) => {
+          const next = findPhoneCountry(code);
+          // Re-fit the typed number to the new country's rules.
+          setBilling({ phoneCountry: next.code, phone: sanitizePhoneNumber(state.billing.phone, next) });
+        }}
+        searchPlaceholder="Search country or code"
+        className="h-full shrink-0"
+        popoverClassName="w-72"
+        triggerClassName="h-full gap-1.5 rounded-l-lg border-r border-brand-border bg-[#f7f6fe] pr-2 pl-3 hover:bg-brand-purple-light/60"
+        trigger={(_, open) => (
+          <>
+            <Flag code={country.code} />
+            <span className="text-[15px] font-medium text-brand-text tabular-nums">+{country.dial}</span>
+            <ChevronDown className={cn("size-3.5 text-brand-muted transition-transform", open && "rotate-180")} aria-hidden />
+          </>
+        )}
+      />
       <input
         id="bill-phone"
         type="tel"
@@ -553,15 +535,6 @@ function Field({
           <CircleAlert className="size-3.5 shrink-0" aria-hidden /> {error}
         </p>
       )}
-    </div>
-  );
-}
-
-function SelectBox({ children }: { children: ReactNode }) {
-  return (
-    <div className="relative">
-      {children}
-      <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-brand-muted" aria-hidden />
     </div>
   );
 }

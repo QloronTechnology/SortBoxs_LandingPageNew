@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu, X, ChevronDown, Globe } from "lucide-react";
 import type { NavItem, NavLink } from "@/types/navigation";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { routes } from "@/config/routes";
+import { isNavItemActive } from "@/config/navigation";
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +33,7 @@ export function MobileNav({ items }: MobileNavProps) {
   const [openLabel, setOpenLabel] = useState<string | null>(null);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const isClient = useIsClient();
+  const pathname = usePathname();
 
   function close() {
     setIsOpen(false);
@@ -98,13 +101,19 @@ export function MobileNav({ items }: MobileNavProps) {
         <nav aria-label="Mobile primary" className="flex-1 overflow-y-auto px-5 py-2">
           <ul className="flex flex-col divide-y divide-brand-border">
             {items.map((item) => {
+              const isActive = isNavItemActive(item, pathname);
+
               if (item.type === "link" && item.href) {
                 return (
                   <li key={item.label}>
                     <Link
                       href={item.href}
                       onClick={close}
-                      className="block py-4 text-base font-semibold text-brand-text"
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
+                        "block py-4 text-base font-semibold",
+                        isActive ? "text-brand-purple" : "text-brand-text"
+                      )}
                     >
                       {item.label}
                     </Link>
@@ -125,7 +134,7 @@ export function MobileNav({ items }: MobileNavProps) {
                     }}
                     className={cn(
                       "flex w-full items-center justify-between py-4 text-base font-semibold",
-                      isOpenItem ? "text-brand-purple" : "text-brand-text"
+                      isOpenItem || isActive ? "text-brand-purple" : "text-brand-text"
                     )}
                   >
                     {item.label}

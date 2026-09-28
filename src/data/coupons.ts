@@ -43,10 +43,11 @@ export const coupons: Coupon[] = [
 ];
 
 /**
- * Until coupons are validated on the server, ANY code is accepted: known codes use their own rules,
- * anything else gets `demoCoupon`. Set to false to only accept the codes listed above.
+ * true = ANY code is accepted with `demoCoupon` (a fake 10%). Off: subscription plans send the code to
+ * the backend, which validates it (an unknown code there fails the payment with "Invalid or inactive
+ * coupon code"), so a fake discount here only misleads. Only custom-plan previews use these codes.
  */
-export const acceptAnyCode = true;
+export const acceptAnyCode = false;
 const demoCoupon: Omit<Coupon, "code"> = { description: "10% off your plan (demo code)", type: "percent", value: 0.1 };
 
 export function findCoupon(input: string): Coupon | undefined {

@@ -130,7 +130,3 @@ export const modules: ModuleSummary[] = [
     href: routes.platform.commerce,
   },
 ];
-
-export function getModuleBySlug(slug: string) {
-  return modules.find((module) => module.slug === slug);
-}

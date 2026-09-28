@@ -1,16 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Check, ChevronDown, Info, Pencil, Plus, X } from "lucide-react";
+import { Check, Info, Pencil, Plus, X } from "lucide-react";
 import { billingCountries } from "@/data/billingTax";
 import { toneClasses } from "@/components/layout/Header/menus/menuStyles";
 import { formatRate } from "@/lib/tax";
 import { cn, formatINR } from "@/lib/utils";
 import { useCheckout } from "./CheckoutProvider";
+import { Combobox, Flag } from "./Combobox";
 import { CouponField } from "./CouponField";
-
-const selectClass =
-  "h-11 w-full cursor-pointer appearance-none rounded-lg border border-brand-border bg-white pr-10 pl-3 text-[15px] text-brand-text outline-none focus-visible:border-brand-purple focus-visible:ring-2 focus-visible:ring-brand-purple/30 aria-invalid:border-amber-400";
 
 /**
  * "Your Sortboxs Plan" — selected modules, coupon, tax location and totals. With `onEditPlan` (Step 2)
@@ -169,40 +167,24 @@ function BillingLocation() {
         Tax &amp; Billing Location
       </p>
       <div className="mt-3 flex flex-col gap-2.5">
-        <div className="relative">
-          <select
-            aria-label="Country"
-            value={state.country}
-            onChange={(event) => dispatch({ type: "setCountry", country: event.target.value })}
-            className={selectClass}
-          >
-            {billingCountries.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.flag} {c.name}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-brand-muted" aria-hidden />
-        </div>
+        <Combobox
+          ariaLabel="Country"
+          value={state.country}
+          options={billingCountries.map((c) => ({ value: c.code, label: c.name, flag: c.code }))}
+          onChange={(code) => dispatch({ type: "setCountry", country: code })}
+          searchPlaceholder="Search country"
+        />
 
         {country.regions && (
-          <div className="relative">
-            <select
-              aria-label={country.regionLabel ?? "Region"}
-              aria-invalid={!totals.locationComplete}
-              value={state.region}
-              onChange={(event) => dispatch({ type: "setRegion", region: event.target.value })}
-              className={cn(selectClass, !state.region && "text-brand-muted")}
-            >
-              <option value="" disabled>
-                Select {(country.regionLabel ?? "region").toLowerCase()}
-              </option>
-              {country.regions.map((region) => (
-                <option key={region.name}>{region.name}</option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-brand-muted" aria-hidden />
-          </div>
+          <Combobox
+            ariaLabel={country.regionLabel ?? "Region"}
+            value={state.region}
+            options={country.regions.map((region) => ({ value: region.name, label: region.name }))}
+            onChange={(region) => dispatch({ type: "setRegion", region })}
+            placeholder={`Select ${(country.regionLabel ?? "region").toLowerCase()}`}
+            searchPlaceholder={`Search ${(country.regionLabel ?? "region").toLowerCase()}`}
+            invalid={!totals.locationComplete}
+          />
         )}
       </div>
 
@@ -253,7 +235,13 @@ function BillingDetailsSummary() {
   const { state, totals } = useCheckout();
   const { country } = totals;
   const rows: [string, ReactNode][] = [
-    ["Country", `${country.flag} ${country.name}`],
+    [
+      "Country",
+      <span key="country" className="flex items-center gap-2">
+        <Flag code={country.code} />
+        {country.name}
+      </span>,
+    ],
     ...(country.regions ? [[country.regionLabel ?? "Region", state.region || "—"] as [string, ReactNode]] : []),
     ...(totals.hasValidTaxId && country.taxId
       ? [

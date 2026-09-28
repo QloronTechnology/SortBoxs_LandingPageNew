@@ -2,10 +2,6 @@ import type { ComponentType, SVGProps } from "react";
 
 export type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
-export interface ChecklistFeature {
-  label: string;
-}
-
 export interface FAQItem {
   question: string;
   answer: string;
@@ -50,10 +46,4 @@ export interface IndustryItem {
   name: string;
   icon: IconType;
   href: string;
-}
-
-export interface StatItem {
-  value: string;
-  label: string;
-  icon?: IconType;
 }

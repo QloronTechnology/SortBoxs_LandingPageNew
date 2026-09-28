@@ -38,6 +38,11 @@ function CouponForm() {
 
   const apply = (event: FormEvent) => {
     event.preventDefault();
+    // Subscription plans: the backend validates coupons at checkout — just carry the code.
+    if (totals.plan) {
+      if (code.trim()) dispatch({ type: "setCoupon", coupon: code.trim().toUpperCase() });
+      return;
+    }
     const coupon = findCoupon(code);
     if (!coupon) {
       setError("This code isn't valid. Check the spelling and try again.");
@@ -119,7 +124,10 @@ function AppliedChip({
       <div className="min-w-0 flex-1 text-sm" aria-live="polite">
         <p className={cn("font-semibold", inactive ? "text-amber-800" : "text-emerald-800")}>
           {applied.coupon.code}
-          {!inactive && <span className="font-normal"> applied · {formatINR(applied.discount)} off / {period}</span>}
+          {!inactive && !applied.pending && (
+            <span className="font-normal"> applied · {formatINR(applied.discount)} off / {period}</span>
+          )}
+          {applied.pending && <span className="font-normal"> added</span>}
         </p>
         <p className={inactive ? "text-amber-700" : "text-emerald-700"}>{applied.error ?? applied.coupon.description}</p>
       </div>

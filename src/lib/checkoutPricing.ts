@@ -3,17 +3,17 @@ import { checkoutModules, defaultSelection, defaultUsers, yearlyDiscount } from 
 import { defaultLocation, type BillingCountry } from "@/data/billingTax";
 import { evaluateCoupon, findCoupon, type Coupon } from "@/data/coupons";
 import type { MenuTone } from "@/data/menus/types";
-import { pricingPlans, type BillingCycle, type PricingPlan } from "@/data/pricing";
+import type { BillingCycle, PricingPlan } from "@/data/pricing";
 import { defaultPhoneCountry } from "@/data/phone";
+import { findLoadedPlan } from "@/lib/plansApi";
 import { findCountry, quoteTax, validateTaxId, type TaxQuote } from "@/lib/tax";
 
 /**
- * Checkout state and pricing — pure (no React), so the browser (CheckoutProvider) and the server
- * (/api/checkout/order, which recomputes the amount before charging) use exactly the same maths.
+ * Checkout state and pricing — pure (no React). Plans come from the backend (`lib/plansApi.ts`); the
+ * drawer only opens a plan checkout once they've loaded.
  */
 
-export const checkoutPlans = pricingPlans.filter((plan) => plan.price);
-export const findPlan = (id: string | null) => checkoutPlans.find((plan) => plan.id === id) ?? null;
+export const findPlan = (id: string | null) => findLoadedPlan(id);
 
 export interface CheckoutState {
   /** A fixed plan from /pricing (its id), or null for a custom plan built from modules. */
@@ -108,6 +108,11 @@ export interface AppliedCoupon {
   /** INR off per billing period; 0 when `error` says why it no longer applies. */
   discount: number;
   error?: string;
+  /**
+   * Plan checkouts: the backend validates the code and applies it at checkout/initiate (there's no
+   * coupon-check API), so it's carried with no discount of our own until then.
+   */
+  pending?: boolean;
 }
 
 export interface CheckoutTotals {
@@ -185,10 +190,19 @@ export function computeTotals(state: CheckoutState): CheckoutTotals {
   const { plan, lines, subtotal, discount, discountLabel, yearlySaving } = pricePlan(state, months);
   const country = findCountry(state.country);
 
-  const found = state.coupon ? findCoupon(state.coupon) : undefined;
-  const coupon = found
-    ? { coupon: found, ...evaluateCoupon(found, { amount: subtotal - discount, cycle: state.cycle, months }) }
-    : null;
+  // Backend plans: the backend owns coupons — carry the code, don't invent a discount. Custom plans
+  // (no backend yet) keep the local demo codes.
+  const found = state.coupon && !plan ? findCoupon(state.coupon) : undefined;
+  const coupon: AppliedCoupon | null =
+    state.coupon && plan
+      ? {
+          coupon: { code: state.coupon, description: "Checked and applied by SortBoxs when you pay.", type: "flat", value: 0 },
+          discount: 0,
+          pending: true,
+        }
+      : found
+        ? { coupon: found, ...evaluateCoupon(found, { amount: subtotal - discount, cycle: state.cycle, months }) }
+        : null;
   const taxable = subtotal - discount - (coupon?.discount ?? 0);
 
   // The tax ID is optional: only a typed one is checked (and, when valid, can switch to reverse charge).

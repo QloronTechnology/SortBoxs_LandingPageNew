@@ -1,10 +1,8 @@
 import {
   BriefcaseBusiness,
-  Building2,
   CalendarCheck,
   ChartColumnIncreasing,
   ChartLine,
-  Crown,
   FileUp,
   FileX2,
   Headphones,
@@ -13,7 +11,6 @@ import {
   MonitorPlay,
   Package,
   PiggyBank,
-  Send,
   ShoppingCart,
   Sparkles,
   UserPlus,
@@ -60,65 +57,28 @@ export const pricingHero = {
 /** Badge on the Yearly toggle (copy from the design). */
 export const yearlySavingsLabel = "Save up to 20%";
 
-export const pricingPlans: PricingPlan[] = [
-  {
-    id: "starter",
-    name: "Starter",
-    description: "For small teams getting started.",
-    icon: Send,
-    price: { monthly: 4999, yearly: 54999 },
-    features: ["CRM", "Contacts", "Leads", "Tasks", "Basic Reports"],
-    cta: { label: "Get Started" },
-  },
-  {
-    id: "professional",
-    name: "Professional",
-    description: "For growing businesses.",
-    icon: Crown,
-    price: { monthly: 7999, yearly: 89999 },
-    features: ["CRM", "Sales", "Marketing", "Customer Support", "Automation", "Reports", "Dashboards"],
-    cta: { label: "Get Started" },
-    popular: true,
-  },
-  {
-    id: "business",
-    name: "Business",
-    description: "For established organizations.",
-    icon: Building2,
-    price: { monthly: 14999, yearly: 175999 },
-    features: [
-      "CRM",
-      "Sales",
-      "Marketing",
-      "HRMS",
-      "Recruitment",
-      "Payroll",
-      "Finance",
-      "Projects",
-      "Inventory",
-      "AI Features",
-    ],
-    cta: { label: "Get Started" },
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    description: "For large organizations with custom needs.",
-    icon: Layers,
-    features: [
-      "Enterprise CRM",
-      "Advanced HRMS",
-      "Finance",
-      "AI & Automation",
-      "Advanced Analytics",
-      "SSO",
-      "Security",
-      "Custom Integrations",
-      "Dedicated Support",
-    ],
-    cta: { label: "Contact Sales", href: routes.company.contact },
-  },
-];
+/**
+ * The subscription plans (Starter, Professional, …) are created in the SortBoxs admin and loaded at runtime
+ * (`lib/plansApi.ts`). Enterprise isn't a backend plan: it's this fixed card, always shown last.
+ */
+export const enterprisePlan: PricingPlan = {
+  id: "enterprise",
+  name: "Enterprise",
+  description: "For large organizations with custom needs.",
+  icon: Layers,
+  features: [
+    "Enterprise CRM",
+    "Advanced HRMS",
+    "Finance",
+    "AI & Automation",
+    "Advanced Analytics",
+    "SSO",
+    "Security",
+    "Custom Integrations",
+    "Dedicated Support",
+  ],
+  cta: { label: "Contact Sales", href: routes.company.contact },
+};
 
 export interface PricingModule {
   name: string;
@@ -145,27 +105,6 @@ export const pricingModules: PricingModule[] = [
   { name: "AI Interview", description: "Smarter hiring", icon: MonitorPlay, tone: "pink", href: routes.platform.aiInterview },
   { name: "Automation", description: "Workflows & productivity", icon: Workflow, tone: "green", href: routes.platform.automation },
   { name: "Integrations", description: "Connect your tools", icon: Blocks, tone: "amber", href: routes.integrations },
-];
-
-/** Compare Plans table — [Starter, Professional, Business, Enterprise], exactly as in the design. */
-export const planComparison: { feature: string; included: [boolean, boolean, boolean, boolean] }[] = [
-  { feature: "CRM", included: [true, true, true, true] },
-  { feature: "Sales", included: [true, true, true, true] },
-  { feature: "Marketing", included: [true, true, true, true] },
-  { feature: "Customer Support", included: [true, true, true, true] },
-  { feature: "HRMS", included: [false, false, true, true] },
-  { feature: "Recruitment", included: [false, false, true, true] },
-  { feature: "Payroll", included: [false, false, true, true] },
-  { feature: "Finance", included: [false, false, true, true] },
-  { feature: "Projects", included: [false, false, true, true] },
-  { feature: "Inventory", included: [false, false, true, true] },
-  { feature: "AI Assistant", included: [false, false, true, true] },
-  { feature: "AI Interview", included: [false, false, true, true] },
-  { feature: "Automation", included: [false, true, true, true] },
-  { feature: "Analytics", included: [false, true, true, true] },
-  { feature: "API", included: [false, true, true, true] },
-  { feature: "SSO", included: [false, false, false, true] },
-  { feature: "Advanced Security", included: [false, false, false, true] },
 ];
 
 export const buildPlanBanner = {

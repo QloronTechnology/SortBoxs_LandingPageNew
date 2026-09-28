@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type FocusEvent } from "react";
+import { usePathname } from "next/navigation";
 import type { NavItem } from "@/types/navigation";
 import { cn } from "@/lib/utils";
+import { isNavItemActive } from "@/config/navigation";
 import { NavItemTrigger, NavItemLink } from "./NavItem";
-import { MegaMenu } from "./MegaMenu";
-import { DropdownMenu } from "./DropdownMenu";
 import { MegaPanel } from "./MegaPanel";
 import { navPanels } from "./menus";
 
@@ -26,6 +26,7 @@ export function DesktopNav({ items, className }: DesktopNavProps) {
   const navRef = useRef<HTMLElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRefs = useRef(new Map<string, HTMLButtonElement>());
+  const pathname = usePathname();
 
   function cancelClose() {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -80,8 +81,10 @@ export function DesktopNav({ items, className }: DesktopNavProps) {
       onBlur={handleBlur}
     >
       {items.map((item) => {
+        const isActive = isNavItemActive(item, pathname);
+
         if (item.type === "link" && item.href) {
-          return <NavItemLink key={item.label} label={item.label} href={item.href} />;
+          return <NavItemLink key={item.label} label={item.label} href={item.href} isActive={isActive} />;
         }
 
         const isOpen = openLabel === item.label;
@@ -97,6 +100,7 @@ export function DesktopNav({ items, className }: DesktopNavProps) {
               }}
               label={item.label}
               isOpen={isOpen}
+              isActive={isActive}
               controls={id}
               onMouseEnter={() => open(item.label)}
               // Mouse click only opens (hover already did, so toggling would slam it shut);
@@ -110,16 +114,6 @@ export function DesktopNav({ items, className }: DesktopNavProps) {
               <MegaPanel id={id} label={`${item.label} menu`}>
                 <Panel onNavigate={() => setOpenLabel(null)} />
               </MegaPanel>
-            )}
-            {isOpen && item.columns && item.type === "mega-menu" && (
-              <div id={id}>
-                <MegaMenu columns={item.columns} onNavigate={() => setOpenLabel(null)} />
-              </div>
-            )}
-            {isOpen && item.columns && item.type === "dropdown" && (
-              <div id={id}>
-                <DropdownMenu columns={item.columns} onNavigate={() => setOpenLabel(null)} />
-              </div>
             )}
           </div>
         );

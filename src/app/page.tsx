@@ -24,6 +24,7 @@ import { industries } from "@/data/industries";
 import { testimonials } from "@/data/testimonials";
 import { resources } from "@/data/resources";
 import { faqs } from "@/data/faq";
+import { routes } from "@/config/routes";
 
 export default function Home() {
   return (
@@ -39,7 +40,7 @@ export default function Home() {
         title={crmPage.heading}
         description={crmPage.description}
         features={crmPage.features}
-        cta={{ label: crmPage.cta, href: "/crm" }}
+        cta={{ label: crmPage.cta, href: routes.platform.crm }}
         visualNode={<GoalsPipelineDemo />}
       />
       <HRMSJourneyDemo data={hrmsPage} />

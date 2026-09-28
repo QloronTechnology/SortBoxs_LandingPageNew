@@ -3,7 +3,8 @@
 import { ArrowRight, Check, Minus, Plus } from "lucide-react";
 import { maxUsersPerModule } from "@/data/checkout";
 import { cn, formatINR } from "@/lib/utils";
-import { checkoutPlans, useCheckout } from "./CheckoutProvider";
+import { usePricingPlans } from "@/components/pricing/usePricingPlans";
+import { useCheckout } from "./CheckoutProvider";
 
 /**
  * Step 1 when the checkout was opened from a /pricing plan card: the chosen plan with its price, what's
@@ -11,8 +12,10 @@ import { checkoutPlans, useCheckout } from "./CheckoutProvider";
  */
 export function PlanStep() {
   const { state, totals, dispatch } = useCheckout();
+  const plans = usePricingPlans();
   const plan = totals.plan;
   if (!plan?.price) return null;
+  const checkoutPlans = plans.status === "ready" ? plans.plans : [plan];
 
   const yearly = state.cycle === "yearly";
   const period = yearly ? "year" : "month";
@@ -28,7 +31,8 @@ export function PlanStep() {
   return (
     <div className="flex flex-col gap-5">
       {/* Plan switcher */}
-      <div role="radiogroup" aria-label="Plan" className="grid grid-cols-3 gap-2">
+      {/* Any number of plans (admin-created): 2 per row on phones, up to 3 on wider screens. */}
+      <div role="radiogroup" aria-label="Plan" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {checkoutPlans.map((option) => {
           const active = option.id === plan.id;
           const optionPrice = option.price![yearly ? "yearly" : "monthly"];

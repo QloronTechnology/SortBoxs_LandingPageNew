@@ -34,7 +34,7 @@ const burst: [number, number, string][] = [
  * verified online payment. Same layout — status header, order summary, what happens next, and help.
  */
 
-export function InvoiceRequested({ requestId, amount }: { requestId: string; amount: number }) {
+export function InvoiceRequested({ requestId, amount, demo }: { requestId: string; amount: number; demo?: boolean }) {
   const { state } = useCheckout();
   const { email } = state.billing;
   const phone = formatPhone(state.billing.phone, findPhoneCountry(state.billing.phoneCountry));
@@ -45,7 +45,11 @@ export function InvoiceRequested({ requestId, amount }: { requestId: string; amo
       icon={<FileText className="size-8" aria-hidden />}
       status={{ label: "Awaiting payment", tone: "amber" }}
       title="Invoice request received"
-      intro={`${thanks} No payment has been taken. Your plan is reserved while you complete the bank transfer.`}
+      intro={
+        demo
+          ? `${thanks} Test mode: nothing was sent — this shows the flow until the billing backend is connected.`
+          : `${thanks} No payment has been taken. Your plan is reserved while you complete the bank transfer.`
+      }
       reference={{ label: "Reference number", value: requestId, hint: "Quote this on your bank transfer" }}
       amountLabel="Amount due"
       amount={amount}
@@ -68,7 +72,17 @@ export function InvoiceRequested({ requestId, amount }: { requestId: string; amo
   );
 }
 
-export function PaymentSuccess({ orderId, paymentId, amount }: { orderId: string; paymentId: string; amount: number }) {
+export function PaymentSuccess({
+  orderId,
+  paymentId,
+  amount,
+  demo,
+}: {
+  orderId: string;
+  paymentId: string;
+  amount: number;
+  demo?: boolean;
+}) {
   const { state } = useCheckout();
   const { email } = state.billing;
   const thanks = greeting(state.billing.fullName);
@@ -76,7 +90,7 @@ export function PaymentSuccess({ orderId, paymentId, amount }: { orderId: string
   return (
     <Confirmation
       icon={<CircleCheck className="size-8" aria-hidden />}
-      status={{ label: "Paid", tone: "green" }}
+      status={{ label: demo ? "Test payment" : "Paid", tone: "green" }}
       title="Payment successful"
       intro={`${thanks} We've received ${formatINR(amount)} and your SortBoxs workspace is being set up.`}
       reference={{ label: "Payment ID", value: paymentId, hint: "Keep this for your records" }}
@@ -87,7 +101,9 @@ export function PaymentSuccess({ orderId, paymentId, amount }: { orderId: string
         ["Receipt sent to", email],
       ]}
       timeline={[
-        { title: "Payment confirmed", text: "Verified with Razorpay.", state: "done" },
+        demo
+          ? { title: "Test payment received", text: "Razorpay test mode — not verified by a server yet.", state: "done" }
+          : { title: "Payment confirmed", text: "Verified with Razorpay.", state: "done" },
         { title: "Workspace set-up", text: "We're preparing your modules and users.", state: "current" },
         { title: "Welcome email", text: `Sign-in details and your tax invoice go to ${email}.`, state: "upcoming" },
       ]}
