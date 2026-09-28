@@ -2,10 +2,10 @@ import { Building2, Crown, Send } from "lucide-react";
 import type { PricingPlan } from "@/data/pricing";
 
 /**
- * DEVELOPMENT PREVIEW ONLY — the earlier hardcoded plans, used to see how /pricing looks with more
- * backend plans than fit in a row. Added after the real plans when NEXT_PUBLIC_MOCK_PLANS=true (set in
- * .env.development; never in production). Their ids aren't backend ids, so paying for one fails with
- * "No subscription plan selected" — the checkout needs a real plan.
+ * TEMPORARY SHOWCASE PLANS — the earlier hardcoded plans, shown after the real backend plans when
+ * NEXT_PUBLIC_MOCK_PLANS=true (currently on in .env.development AND .env.production, at the user's request,
+ * so /pricing looks complete until real plans exist in the SortBoxs admin). They aren't backend plans:
+ * Pay shows "coming soon — contact sales" instead of charging. Remove by setting the flag to false.
  */
 export const mockPlans: PricingPlan[] = [
   {

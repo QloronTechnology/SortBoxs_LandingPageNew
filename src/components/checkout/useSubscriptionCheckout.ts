@@ -67,6 +67,14 @@ export function useSubscriptionCheckout() {
   };
 
   async function paySubscription() {
+    // Showcase plans (data/mockPlans.ts) aren't backend plans, so they can't be bought online.
+    if (state.plan?.startsWith("mock-")) {
+      setPayment({
+        phase: "error",
+        message: `Online checkout for ${totals.plan?.name ?? "this plan"} is coming soon. Please contact our sales team at ${site.supportEmail} to get started.`,
+      });
+      return;
+    }
     const payload = buildCheckoutPayload(state);
     const key = JSON.stringify(payload);
     let current = lastOrder.current?.key === key ? lastOrder.current : null;

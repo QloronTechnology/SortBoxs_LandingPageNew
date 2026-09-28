@@ -2,7 +2,6 @@ import { Building2, Crown, Gem, Rocket, Send, type LucideIcon } from "lucide-rea
 import type { PricingPlan } from "@/data/pricing";
 import { getSubscriptionCard } from "@/lib/api/subscriptionApi";
 import type { SubscriptionPlan } from "@/lib/api/subscriptionMappers";
-import { mockPlans } from "@/data/mockPlans";
 
 /** Development preview: append the mock plans (see data/mockPlans.ts). Never set in production. */
 const withMockPlans = process.env.NEXT_PUBLIC_MOCK_PLANS === "true";
@@ -85,8 +84,14 @@ export async function fetchPlans(): Promise<PricingPlan[]> {
     if (result.status === "fulfilled") plans.push(toPricingPlan(...result.value, plans.length));
     else console.error("[plans]", result.reason);
   });
-  if (ids.length > 0 && plans.length === 0) throw new Error("No subscription plans could be loaded.");
-  return withMockPlans ? [...plans, ...mockPlans] : plans;
+  if (!withMockPlans) {
+    if (ids.length > 0 && plans.length === 0) throw new Error("No subscription plans could be loaded.");
+    return plans;
+  }
+  // TEMPORARY showcase: the mock plans are shown even when the real ones fail to load, so the page
+  // always looks complete. Loaded on demand, so builds without the flag never include the mock data.
+  const { mockPlans } = await import("@/data/mockPlans");
+  return [...plans, ...mockPlans];
 }
 
 /* ---- Shared store: one fetch per page load, read by /pricing and the checkout ---- */
