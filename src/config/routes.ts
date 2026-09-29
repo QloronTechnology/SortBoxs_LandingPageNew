@@ -3,7 +3,8 @@ export const routes = {
   pricing: "/pricing",
   integrations: "/integrations",
   login: "/login",
-  demo: "/demo",
+  /** Opens the Book a Demo modal on the current page (components/demo/bookDemoRequest.ts). */
+  demo: "#book-demo",
   signup: "/signup",
 
   platform: {

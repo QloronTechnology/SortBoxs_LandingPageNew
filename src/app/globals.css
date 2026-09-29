@@ -15,6 +15,9 @@
   --color-brand-border: #e6e4f7;
 }
 
+/* Laptop-width but short screens (1366×768, 1280×720 or 1536×864 laptops lose ~120px to browser chrome): used to tighten the Book a Demo modal so it fits without scrolling. */
+@custom-variant short (@media (min-width: 64rem) and (max-height: 760px));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -35,6 +38,15 @@
   /* Extra-wide desktops (design canvas is 1920px). */
   --breakpoint-3xl: 106.25rem; /* 1700px */
   --breakpoint-4xl: 112.5rem; /* 1800px */
+}
+
+/* Tailwind v4 dropped the pointer cursor on buttons (preflight uses the browser default), so clickable
+   buttons showed an arrow. Restore the hand for enabled buttons, like links. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
 }
 
 body {
@@ -567,5 +579,122 @@ body {
   .oc-ripple,
   .oc-burst {
     opacity: 0;
+  }
+}
+
+/* Book a Demo modal (components/demo/BookDemoModal.tsx). */
+@keyframes demo-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+}
+
+.demo-modal-in {
+  animation: demo-modal-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-modal-in {
+    animation: none;
+  }
+}
+
+/* Book a Demo success screen (components/demo/BookDemoSuccess.tsx). Stagger with style="--d: 300ms". */
+@keyframes demo-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes demo-badge-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes demo-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+
+@keyframes demo-twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.75);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes demo-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.demo-rise {
+  animation: demo-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both;
+}
+
+.demo-badge-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: demo-badge-pop 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both;
+}
+
+.demo-draw {
+  stroke-dasharray: var(--len);
+  stroke-dashoffset: var(--len);
+  animation: dash-draw 0.45s ease-out var(--d, 0ms) forwards;
+}
+
+.demo-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: demo-ring 2.4s ease-out var(--d, 0ms) infinite;
+}
+
+.demo-twinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: demo-twinkle 2.6s ease-in-out var(--d, 0ms) infinite;
+}
+
+.demo-grow-x {
+  transform-origin: left;
+  animation: demo-grow-x 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-rise,
+  .demo-badge-pop,
+  .demo-ring,
+  .demo-twinkle,
+  .demo-grow-x {
+    animation: none;
+  }
+
+  .demo-draw {
+    animation: none;
+    stroke-dashoffset: 0;
   }
 }

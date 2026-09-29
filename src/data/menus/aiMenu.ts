@@ -106,7 +106,7 @@ export const aiMenu = {
       { label: "AI Use Cases", href: "/use-cases", icon: ListChecks },
       { label: "AI Success Stories", href: "#", icon: Lightbulb },
       { label: "AI Documentation", href: "#", icon: BookOpen },
-      { label: "Request a Demo", href: "#", icon: CalendarPlus },
+      { label: "Request a Demo", href: routes.demo, icon: CalendarPlus },
     ] satisfies MenuIconLink[],
   },
 

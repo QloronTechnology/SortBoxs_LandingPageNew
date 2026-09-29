@@ -100,7 +100,7 @@ export const resourcesMenu = {
   },
 
   quickLinks: [
-    { label: "Request a Demo", href: "#" },
+    { label: "Request a Demo", href: routes.demo },
     { label: "Community Forum", href: "#" },
     { label: "Contact Support", href: routes.company.contact },
     { label: "Partner Resources", href: routes.company.partners },

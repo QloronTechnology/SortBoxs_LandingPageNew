@@ -113,7 +113,7 @@ export const solutionsMenu = {
     image: { src: "/images/ai-solutions.png", alt: "SortBoxs AI assistant showing revenue insights", width: 636, height: 428 },
     quickLinks: [
       { label: "View All Solutions", href: routes.solutions.all },
-      { label: "Request a Demo", href: "#" },
+      { label: "Request a Demo", href: routes.demo },
       { label: "Explore Use Cases", href: "/use-cases" },
       { label: "Customer Success Stories", href: "#" },
     ] satisfies MenuLink[],

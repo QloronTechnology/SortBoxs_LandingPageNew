@@ -144,7 +144,7 @@ export const platformMenu = {
     image: { src: "/images/platform-dashboard.png", alt: "SortBoxs dashboard preview", width: 780, height: 628 },
     quickLinks: [
       { label: "View All Modules", href: routes.platform.all },
-      { label: "Request a Demo", href: "#" },
+      { label: "Request a Demo", href: routes.demo },
       { label: "Explore Use Cases", href: "/use-cases" },
       { label: "Platform Documentation", href: "#" },
     ] satisfies MenuLink[],
@@ -164,7 +164,7 @@ export const platformMenu = {
     { title: "Always Evolving", description: "Regular updates & new features", icon: RefreshCw },
   ],
 
-  support: { title: "Need a custom solution?", subtitle: "Talk to our experts", href: "/company/contact", icon: PlayCircle },
+  support: { title: "Need a custom solution?", subtitle: "Talk to our experts", href: routes.demo, icon: PlayCircle },
 };
 
 /** Flattened sections for the mobile accordion (hamburger menu). */

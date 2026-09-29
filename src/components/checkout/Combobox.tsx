@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from "react";
 import { Check, ChevronDown, Globe, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Popover } from "@/components/ui/Popover";
 
 /**
  * Flag image for an ISO country code. Emoji flags (🇮🇳) don't render on Windows — Chrome and Edge show
@@ -56,6 +57,8 @@ export function Combobox({
   className,
   triggerClassName,
   popoverClassName,
+  portal,
+  positionAnchorRef,
 }: {
   id?: string;
   value: string;
@@ -73,6 +76,10 @@ export function Combobox({
   className?: string;
   triggerClassName?: string;
   popoverClassName?: string;
+  /** Render the list in a <body> portal (inside scrolling modals, so it's never clipped). */
+  portal?: boolean;
+  /** Portal mode: position the list under this element (e.g. the whole phone field) and match its width. */
+  positionAnchorRef?: RefObject<HTMLElement | null>;
 }) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -114,6 +121,7 @@ export function Combobox({
   useEffect(() => {
     if (!open) return;
     searchRef.current?.focus({ preventScroll: true });
+    if (portal) return; // the Popover handles outside clicks
     const onPointer = (e: PointerEvent) => {
       if (!rootRef.current?.contains(e.target as Node)) close(false);
     };
@@ -145,6 +153,58 @@ export function Combobox({
       close(false);
     }
   };
+
+  const panel = (
+    <>
+      <div className="flex items-center gap-2 border-b border-brand-border px-3">
+        <Search className="size-4 shrink-0 text-brand-muted" aria-hidden />
+        <input
+          ref={searchRef}
+          role="combobox"
+          aria-expanded
+          aria-controls={listId}
+          aria-activedescendant={filtered[active] ? `${listId}-${filtered[active].value}` : undefined}
+          aria-autocomplete="list"
+          aria-label={searchPlaceholder}
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setActive(0);
+          }}
+          onKeyDown={onSearchKey}
+          placeholder={searchPlaceholder}
+          className="h-10 min-w-0 flex-1 bg-transparent text-sm text-brand-text outline-none placeholder:text-brand-muted/70"
+        />
+      </div>
+      <ul ref={listRef} id={listId} role="listbox" aria-label={ariaLabel} className="max-h-64 min-h-0 overflow-y-auto overscroll-contain p-1">
+        {filtered.length === 0 && <li className="px-3 py-2.5 text-sm text-brand-muted">No matches</li>}
+        {filtered.map((option, index) => {
+          const isSelected = option.value === value;
+          return (
+            <li
+              key={option.value}
+              id={`${listId}-${option.value}`}
+              data-index={index}
+              role="option"
+              aria-selected={isSelected}
+              onPointerMove={() => setActive(index)}
+              onClick={() => pick(option)}
+              className={cn(
+                "flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-brand-text",
+                index === active && "bg-brand-purple-light/70",
+                isSelected && "font-medium text-brand-purple"
+              )}
+            >
+              {option.flag && <Flag code={option.flag} />}
+              <span className="min-w-0 flex-1 truncate">{option.label}</span>
+              {option.meta && <span className="shrink-0 text-brand-muted tabular-nums">{option.meta}</span>}
+              <Check className={cn("size-4 shrink-0 text-brand-purple", !isSelected && "invisible")} aria-hidden />
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
 
   return (
     <div ref={rootRef} className={cn("relative", className)}>
@@ -183,63 +243,28 @@ export function Combobox({
         )}
       </button>
 
-      {open && (
-        <div
-          className={cn(
-            "absolute left-0 z-50 w-full min-w-[16rem] overflow-hidden rounded-xl border border-brand-border bg-white shadow-[0_12px_32px_-8px_rgba(24,20,70,0.25)]",
-            dropUp ? "bottom-full mb-1.5" : "top-full mt-1.5",
-            popoverClassName
-          )}
-        >
-          <div className="flex items-center gap-2 border-b border-brand-border px-3">
-            <Search className="size-4 shrink-0 text-brand-muted" aria-hidden />
-            <input
-              ref={searchRef}
-              role="combobox"
-              aria-expanded
-              aria-controls={listId}
-              aria-activedescendant={filtered[active] ? `${listId}-${filtered[active].value}` : undefined}
-              aria-autocomplete="list"
-              aria-label={searchPlaceholder}
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setActive(0);
-              }}
-              onKeyDown={onSearchKey}
-              placeholder={searchPlaceholder}
-              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-brand-text outline-none placeholder:text-brand-muted/70"
-            />
+      {open &&
+        (portal ? (
+          <Popover
+            anchorRef={positionAnchorRef ?? buttonRef}
+            triggerRef={buttonRef}
+            matchWidth={positionAnchorRef ? "exact" : true}
+            onDismiss={() => close(false)}
+            className={popoverClassName}
+          >
+            {panel}
+          </Popover>
+        ) : (
+          <div
+            className={cn(
+              "absolute left-0 z-50 w-full min-w-[16rem] overflow-hidden rounded-xl border border-brand-border bg-white shadow-[0_12px_32px_-8px_rgba(24,20,70,0.25)]",
+              dropUp ? "bottom-full mb-1.5" : "top-full mt-1.5",
+              popoverClassName
+            )}
+          >
+            {panel}
           </div>
-          <ul ref={listRef} id={listId} role="listbox" aria-label={ariaLabel} className="max-h-64 overflow-y-auto overscroll-contain p-1">
-            {filtered.length === 0 && <li className="px-3 py-2.5 text-sm text-brand-muted">No matches</li>}
-            {filtered.map((option, index) => {
-              const isSelected = option.value === value;
-              return (
-                <li
-                  key={option.value}
-                  id={`${listId}-${option.value}`}
-                  data-index={index}
-                  role="option"
-                  aria-selected={isSelected}
-                  onPointerMove={() => setActive(index)}
-                  onClick={() => pick(option)}
-                  className={cn(
-                    "flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-brand-text",
-                    index === active && "bg-brand-purple-light/70",
-                    isSelected && "font-medium text-brand-purple"
-                  )}
-                >
-                  {option.flag && <Flag code={option.flag} />}
-                  <span className="min-w-0 flex-1 truncate">{option.label}</span>
-                  {option.meta && <span className="shrink-0 text-brand-muted tabular-nums">{option.meta}</span>}
-                  <Check className={cn("size-4 shrink-0 text-brand-purple", !isSelected && "invisible")} aria-hidden />
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+        ))}
     </div>
   );
 }

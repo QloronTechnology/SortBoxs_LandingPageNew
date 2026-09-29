@@ -77,7 +77,8 @@ export const enterprisePlan: PricingPlan = {
     "Custom Integrations",
     "Dedicated Support",
   ],
-  cta: { label: "Contact Sales", href: routes.company.contact },
+  /** Opens the Book a Demo modal. */
+  cta: { label: "Contact Sales", href: routes.demo },
 };
 
 export interface PricingModule {
@@ -113,7 +114,8 @@ export const buildPlanBanner = {
   description: "Choose only the modules you need.",
   /** Opens the checkout drawer for a custom plan (CheckoutTrigger). */
   primary: { label: "Customize Your Plan" },
-  secondary: { label: "Talk to Our Experts", href: routes.company.contact },
+  /** Opens the Book a Demo modal. */
+  secondary: { label: "Talk to Our Experts", href: routes.demo },
 };
 
 /**

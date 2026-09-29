@@ -150,7 +150,7 @@ export const industriesMenu = {
       { label: "Compare Industries", href: "#" },
       { label: "Industry Use Cases", href: "/use-cases" },
       { label: "Customer Stories", href: "#" },
-      { label: "Request a Demo", href: "#" },
+      { label: "Request a Demo", href: routes.demo },
     ] satisfies MenuLink[],
   },
 };

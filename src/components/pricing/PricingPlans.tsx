@@ -236,7 +236,7 @@ function PlansError() {
           <RotateCw className="size-4" aria-hidden /> Try again
         </button>
         <Link
-          href={routes.company.contact}
+          href={routes.demo}
           className="rounded-lg border border-brand-purple px-4 py-2.5 text-sm font-semibold text-brand-purple outline-none hover:bg-brand-purple-light focus-visible:ring-2 focus-visible:ring-brand-purple/60"
         >
           Contact Sales
