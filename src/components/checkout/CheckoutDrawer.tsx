@@ -54,6 +54,9 @@ function DrawerPanel({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<CheckoutStepId>("configure");
   const { payment, pay } = useSubscriptionCheckout();
   const done = payment.phase === "paid" || payment.phase === "invoiced";
+  // Busy while paying or confirming; locked after a payment the backend couldn't confirm (no double charge).
+  const payBusy = payment.phase === "paying" || payment.phase === "verifying";
+  const payLocked = payBusy || payment.phase === "unverified";
   const invoice = effectiveMethod(state, totals) === "invoice";
   const panel = useRef<HTMLDivElement>(null);
   const body = useRef<HTMLDivElement>(null);
@@ -186,7 +189,7 @@ function DrawerPanel({ onClose }: { onClose: () => void }) {
             {step === "configure" && (totals.plan ? <PlanStep /> : <ConfigureModules gridClassName="sm:grid-cols-2" />)}
             {step === "billing" && <BillingStep ref={billing} />}
             {step === "review" && (
-              <ReviewStep onEditPlan={() => goTo("configure")} onEditBilling={() => goTo("billing")} payError={payment.phase === "error" ? payment.message : null} />
+              <ReviewStep onEditPlan={() => goTo("configure")} onEditBilling={() => goTo("billing")} payError={payment.phase === "error" || payment.phase === "unverified" ? payment.message : null} />
             )}
             <div id="drawer-plan" className="scroll-mt-4">
               <PlanSummary
@@ -252,13 +255,13 @@ function DrawerPanel({ onClose }: { onClose: () => void }) {
                 : pay
             }
             disabled={
-              next ? !totals.canContinue : !totals.canContinue || !state.termsAccepted || payment.phase === "paying"
+              next ? !totals.canContinue : !totals.canContinue || !state.termsAccepted || payLocked
             }
-            aria-busy={payment.phase === "paying"}
+            aria-busy={payBusy}
             className="flex h-11 shrink-0 items-center gap-2 rounded-lg bg-brand-purple px-4 text-[15px] font-semibold whitespace-nowrap text-white outline-none hover:bg-brand-purple-dark focus-visible:ring-2 focus-visible:ring-brand-purple/60 disabled:bg-brand-purple/40 sm:px-5"
           >
             {!next &&
-              (payment.phase === "paying" ? (
+              (payBusy ? (
                 <LoaderCircle className="size-4 animate-spin" aria-hidden />
               ) : invoice ? (
                 <FileText className="size-4" aria-hidden />
@@ -270,8 +273,12 @@ function DrawerPanel({ onClose }: { onClose: () => void }) {
                 <span className="sm:hidden">Continue</span>
                 <span className="hidden sm:inline">Continue to {next.id === "billing" ? "Billing" : "Review"}</span>
               </>
+            ) : payment.phase === "verifying" ? (
+              "Confirming payment…"
             ) : payment.phase === "paying" ? (
               invoice ? "Sending…" : "Waiting for payment…"
+            ) : payment.phase === "unverified" ? (
+              "Payment received"
             ) : invoice ? (
               "Request Invoice"
             ) : (

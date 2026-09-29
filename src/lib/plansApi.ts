@@ -1,6 +1,6 @@
 import { Building2, Crown, Gem, Rocket, Send, type LucideIcon } from "lucide-react";
-import type { PricingPlan } from "@/data/pricing";
-import { getSubscriptionCard } from "@/lib/api/subscriptionApi";
+import { enterprisePlan, type PricingPlan } from "@/data/pricing";
+import { getSubscriptionPlans } from "@/lib/api/subscriptionApi";
 import type { SubscriptionPlan } from "@/lib/api/subscriptionMappers";
 
 /** Development preview: append the mock plans (see data/mockPlans.ts). Never set in production. */
@@ -12,17 +12,15 @@ const withMockPlans = process.env.NEXT_PUBLIC_MOCK_PLANS === "true";
  * plan — it stays the fixed "Contact Sales" card in `data/pricing.ts`.
  *
  * HTTP goes through `lib/api/subscriptionApi.ts`; this file turns backend plans into pricing-card models
- * and shares them between /pricing and the checkout.
+ * and shares them between /pricing and the checkout. Every published plan is shown, in the backend's
+ * order: the list is loaded once per billing cycle (2 requests) and paired up by subscriptionId.
  *
- * TODO(backend): there is no "list all plans" endpoint yet, so the IDs to show come from
- * NEXT_PUBLIC_PLAN_IDS (comma-separated, in display order, set per environment). Once the list endpoint
- * exists, replace `fetchPlanIds` with it.
+ * One exception: a backend plan with the same name as the fixed Enterprise card ("Enterprise") isn't
+ * shown as a second card — Enterprise stays the "Contact Sales" card (the user's decision). Remove
+ * `hiddenPlanNames` to sell it online instead.
  */
 
-const planIds = (process.env.NEXT_PUBLIC_PLAN_IDS ?? "")
-  .split(",")
-  .map((id) => id.trim())
-  .filter(Boolean);
+const hiddenPlanNames = new Set([enterprisePlan.name.trim().toLowerCase()]);
 
 const icons: LucideIcon[] = [Send, Crown, Building2, Rocket, Gem];
 
@@ -54,40 +52,42 @@ export function moduleFeatures(modules: string[] = []) {
   return modules.map((route) => moduleNames[route] ?? route.replace(/^\//, "").replace(/^./, (c) => c.toUpperCase()));
 }
 
-async function fetchPlanIds() {
-  return planIds;
-}
-
 function toPricingPlan(monthly: SubscriptionPlan, yearly: SubscriptionPlan, index: number): PricingPlan {
   return {
     id: String(monthly.id),
     name: monthly.name,
     description: monthly.description,
     icon: icons[index % icons.length],
-    // `totalAmount` = one user for the period, as the backend sends it. The yearly discount is applied by
-    // the backend at checkout (checkout/initiate) — it is deliberately not recalculated here.
+    // `totalAmount` = one user for the period, exactly as the backend prices it; the YEARLY one already
+    // has the backend's yearly discount taken off (₹90/month → ₹864/year at 20%). Never recalculated here.
     price: { monthly: monthly.totalAmount, yearly: yearly.totalAmount },
+    yearlyDiscountPercent: yearly.yearlyDiscountPercentage,
     features: moduleFeatures(monthly.modules),
     cta: { label: "Get Started" },
     popular: monthly.popular,
   };
 }
 
-/** All published plans, in display order. Plans that fail to load are skipped; if none load, it throws. */
+/** All published plans, in the backend's order. Throws if the plan list can't be loaded. */
 export async function fetchPlans(): Promise<PricingPlan[]> {
-  const ids = await fetchPlanIds();
-  const results = await Promise.allSettled(
-    ids.map((id) => Promise.all([getSubscriptionCard(id, "MONTHLY"), getSubscriptionCard(id, "YEARLY")]))
-  );
-  const plans: PricingPlan[] = [];
-  results.forEach((result) => {
-    if (result.status === "fulfilled") plans.push(toPricingPlan(...result.value, plans.length));
-    else console.error("[plans]", result.reason);
-  });
-  if (!withMockPlans) {
-    if (ids.length > 0 && plans.length === 0) throw new Error("No subscription plans could be loaded.");
-    return plans;
+  let plans: PricingPlan[] = [];
+  try {
+    const [monthly, yearly] = await Promise.all([getSubscriptionPlans("MONTHLY"), getSubscriptionPlans("YEARLY")]);
+    const yearlyById = new Map(yearly.map((plan) => [plan.id, plan]));
+    plans = monthly
+      .filter((plan) => !hiddenPlanNames.has(plan.name.trim().toLowerCase()))
+      .flatMap((month) => {
+        const year = yearlyById.get(month.id);
+        // A plan without a yearly price can't be shown on the Monthly/Yearly toggle.
+        if (!year) console.warn(`[plans] plan ${month.id} has no YEARLY price; skipped`);
+        return year ? [{ month, year }] : [];
+      })
+      .map(({ month, year }, index) => toPricingPlan(month, year, index));
+  } catch (error) {
+    if (!withMockPlans) throw error;
+    console.error("[plans]", error);
   }
+  if (!withMockPlans) return plans;
   // TEMPORARY showcase: the mock plans are shown even when the real ones fail to load, so the page
   // always looks complete. Loaded on demand, so builds without the flag never include the mock data.
   const { mockPlans } = await import("@/data/mockPlans");

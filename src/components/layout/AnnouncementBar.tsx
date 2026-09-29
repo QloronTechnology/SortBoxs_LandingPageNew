@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { Rocket, Globe } from "lucide-react";
 import { site } from "@/config/site";
+import { TopBarLinks } from "./TopBarLinks";
 
 export function AnnouncementBar() {
   return (
@@ -11,14 +11,7 @@ export function AnnouncementBar() {
           <span className="truncate">{site.announcement}</span>
         </div>
         <nav aria-label="Company links" className="hidden items-center gap-4 md:flex">
-          {site.topLinks.map((link, index) => (
-            <span key={link.href} className="flex items-center gap-4">
-              {index > 0 && <span className="h-3 w-px bg-white/20" aria-hidden />}
-              <Link href={link.href} className="hover:text-white/80">
-                {link.label}
-              </Link>
-            </span>
-          ))}
+          <TopBarLinks />
           <span className="h-3 w-px bg-white/20" aria-hidden />
           <span className="flex items-center gap-1 text-white/90">
             <Globe className="size-3.5" aria-hidden />

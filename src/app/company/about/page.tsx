@@ -1,22 +1,34 @@
 import type { Metadata } from "next";
-import { Section } from "@/components/ui/Section";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import {
+  AboutApproach,
+  AboutBanner,
+  AboutHero,
+  AboutImpact,
+  AboutPlatform,
+  AboutSecurity,
+  AboutStory,
+  AboutValues,
+} from "@/components/about/AboutSections";
 
 export const metadata: Metadata = {
   title: "About Us",
-  description: "Learn about SortBoxs and our mission to make business impossible-to-be simple.",
+  description:
+    "SortBoxs connects CRM, Sales, HRMS, Finance, Projects, AI and more in one intelligent business platform. Learn about our story, values and approach.",
 };
 
+/** About SortBoxs. The site header and footer (with its "Ready to Transform" CTA) come from the root layout. */
 export default function AboutPage() {
   return (
     <>
-      <Section className="bg-brand-surface">
-        <SectionHeader
-          eyebrow="About Us"
-          title="Nothing Impossible to be"
-          description="SortBoxs was built on a simple idea: every business, no matter its size, deserves one intelligent platform to run its entire operation — instead of a dozen disconnected tools."
-        />
-      </Section>
+      <AboutHero />
+      <AboutValues />
+      <AboutStory />
+      <AboutImpact />
+      <AboutPlatform />
+      {/* Above "How We Think About Business Software" (user's choice). */}
+      <AboutBanner />
+      <AboutApproach />
+      <AboutSecurity />
     </>
   );
 }

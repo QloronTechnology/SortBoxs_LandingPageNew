@@ -125,6 +125,12 @@ export function PricingPlans() {
   const plans = usePricingPlans();
   const apiPlans = plans.status === "ready" ? plans.plans : [];
   const allPlans = [...apiPlans, enterprisePlan];
+  // Yearly badge from the backend's yearlyDiscountPercentage ("Save 20%", or "Save up to 25%" when plans
+  // differ); the design's copy until the plans have loaded.
+  const savings = apiPlans.map((plan) => plan.yearlyDiscountPercent ?? 0).filter((percent) => percent > 0);
+  const yearlyBadge = savings.length
+    ? `Save ${new Set(savings).size > 1 ? "up to " : ""}${Math.max(...savings)}%`
+    : yearlySavingsLabel;
   // The hovered/focused card is highlighted; with none, the "Most Popular" plan is.
   const [hovered, setHovered] = useState<string | null>(null);
   const highlighted = hovered ?? allPlans.find((plan) => plan.popular)?.id;
@@ -167,7 +173,7 @@ export function PricingPlans() {
                 );
               })}
               <span className="absolute -top-2.5 right-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-medium whitespace-nowrap text-emerald-700 sm:top-0 sm:-right-[80px] sm:text-xs">
-                {yearlySavingsLabel}
+                {yearlyBadge}
               </span>
             </div>
           </div>
@@ -265,7 +271,9 @@ function PlanCard({
   /** Width, set by the layout (centred row or slider). */
   className?: string;
 }) {
-  const { id, name, description, icon: Icon, price, features, cta, popular } = plan;
+  const { id, name, description, icon: Icon, price, features, cta, popular, yearlyDiscountPercent } = plan;
+  // Yearly on a discounted backend plan: show 12 × the monthly price struck through, and the saving.
+  const yearlyList = cycle === "yearly" && price && yearlyDiscountPercent ? price.monthly * 12 : null;
   const ctaClass = cn(
     "mt-auto flex items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60",
     primary
@@ -311,6 +319,17 @@ function PlanCard({
           <>
             <span className="text-4xl font-bold text-brand-purple lg:text-3xl 2xl:text-4xl">{formatINR(price[cycle])}</span>
             <span className="text-sm text-brand-muted">/ user / {cycle === "monthly" ? "month" : "year"}</span>
+            {yearlyList !== null && yearlyList > price[cycle] && (
+              <span className="flex w-full items-center gap-2 text-sm">
+                <span className="text-brand-muted line-through tabular-nums">
+                  <span className="sr-only">Was </span>
+                  {formatINR(yearlyList)}
+                </span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                  Save {yearlyDiscountPercent}%
+                </span>
+              </span>
+            )}
           </>
         ) : (
           <span className="text-4xl font-bold text-brand-text lg:text-3xl 2xl:text-4xl">Let&apos;s Talk</span>

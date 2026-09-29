@@ -29,12 +29,13 @@ type Action =
   | { type: "setRegion"; region: string }
   | { type: "setHasTaxId"; hasTaxId: boolean }
   | { type: "setTaxId"; taxId: string }
-  | { type: "setCoupon"; coupon: string | null }
+  /** `percent`: the discount the coupon API confirmed (backend plans); omitted for local codes. */
+  | { type: "setCoupon"; coupon: string | null; percent?: number | null }
   | { type: "updateBilling"; patch: Partial<BillingDetails> }
   | { type: "setTermsAccepted"; accepted: boolean }
   | { type: "restore"; state: CheckoutState };
 
-const STORAGE_KEY = "sortboxs.checkout.v6";
+const STORAGE_KEY = "sortboxs.checkout.v7";
 
 const clampUsers = (users: number, min = 0) =>
   Number.isFinite(users) ? Math.min(maxUsersPerModule, Math.max(min, Math.round(users))) : min;
@@ -93,7 +94,7 @@ function update(state: CheckoutState, action: Exclude<Action, { type: "restore" 
       // Keep letters/digits only: people paste "CHE-123.456.789" or "GB 123 4567 89".
       return { ...state, taxId: action.taxId.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 20) };
     case "setCoupon":
-      return { ...state, coupon: action.coupon };
+      return { ...state, coupon: action.coupon, couponPercent: action.coupon ? (action.percent ?? null) : null };
     case "updateBilling":
       return { ...state, billing: { ...state.billing, ...action.patch } };
     case "setTermsAccepted":

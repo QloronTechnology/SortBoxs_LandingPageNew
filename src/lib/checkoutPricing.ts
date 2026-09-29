@@ -30,6 +30,8 @@ export interface CheckoutState {
   taxId: string;
   /** Applied coupon code (re-checked on every change), or null. */
   coupon: string | null;
+  /** Backend plans: the coupon's discount as confirmed by the coupon API (e.g. 20), or null. */
+  couponPercent: number | null;
   billing: BillingDetails;
   /** Step 3 "I agree to the Terms of Service…" */
   termsAccepted: boolean;
@@ -74,6 +76,7 @@ export function initialCheckoutState(): CheckoutState {
     hasTaxId: false,
     taxId: "",
     coupon: null,
+    couponPercent: null,
     billing: {
       fullName: "",
       email: "",
@@ -109,8 +112,8 @@ export interface AppliedCoupon {
   discount: number;
   error?: string;
   /**
-   * Plan checkouts: the backend validates the code and applies it at checkout/initiate (there's no
-   * coupon-check API), so it's carried with no discount of our own until then.
+   * Plan checkouts: a code carried without a confirmed percentage (e.g. restored from an older session);
+   * the backend applies it at checkout/initiate, so no discount of our own is shown.
    */
   pending?: boolean;
 }
@@ -184,23 +187,43 @@ function pricePlan(state: CheckoutState, months: number) {
   };
 }
 
+/** Amounts like the backend's (₹594.72): rounded to paise. */
+const roundPaise = (amount: number) => Math.round(amount * 100) / 100;
+
 export function computeTotals(state: CheckoutState): CheckoutTotals {
   const yearly = state.cycle === "yearly";
   const months = yearly ? 12 : 1;
-  const { plan, lines, subtotal, discount, discountLabel, yearlySaving } = pricePlan(state, months);
+  const priced = pricePlan(state, months);
+  const { plan, lines, subtotal, discountLabel, yearlySaving } = priced;
+  let { discount } = priced;
   const country = findCountry(state.country);
 
-  // Backend plans: the backend owns coupons — carry the code, don't invent a discount. Custom plans
-  // (no backend yet) keep the local demo codes.
+  // Backend plans: the coupon API confirmed the percentage; mirror the backend's order (doc §7) so the
+  // summary matches checkout/initiate — coupon off the base amount first, then the yearly discount off
+  // what's left. The backend still does the real calculation at checkout/initiate. Custom plans (no
+  // backend yet) keep the local demo codes.
+  let planCoupon: AppliedCoupon | null = null;
+  if (plan?.price && state.coupon) {
+    if (state.couponPercent == null) {
+      planCoupon = {
+        coupon: { code: state.coupon, description: "Checked and applied by SortBoxs when you pay.", type: "flat", value: 0 },
+        discount: 0,
+        pending: true,
+      };
+    } else {
+      const couponOff = roundPaise(subtotal * (state.couponPercent / 100));
+      const yearlyRate = plan.yearlyDiscountPercent != null ? plan.yearlyDiscountPercent / 100 : 1 - plan.price.yearly / (plan.price.monthly * 12);
+      if (months === 12) discount = roundPaise((subtotal - couponOff) * yearlyRate);
+      planCoupon = {
+        coupon: { code: state.coupon, description: `${state.couponPercent}% off your plan`, type: "percent", value: state.couponPercent / 100 },
+        discount: couponOff,
+      };
+    }
+  }
   const found = state.coupon && !plan ? findCoupon(state.coupon) : undefined;
-  const coupon: AppliedCoupon | null =
-    state.coupon && plan
-      ? {
-          coupon: { code: state.coupon, description: "Checked and applied by SortBoxs when you pay.", type: "flat", value: 0 },
-          discount: 0,
-          pending: true,
-        }
-      : found
+  const coupon: AppliedCoupon | null = planCoupon
+    ? planCoupon
+    : found
         ? { coupon: found, ...evaluateCoupon(found, { amount: subtotal - discount, cycle: state.cycle, months }) }
         : null;
   const taxable = subtotal - discount - (coupon?.discount ?? 0);

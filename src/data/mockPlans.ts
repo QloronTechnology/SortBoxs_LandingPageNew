@@ -3,8 +3,8 @@ import type { PricingPlan } from "@/data/pricing";
 
 /**
  * TEMPORARY SHOWCASE PLANS — the earlier hardcoded plans, shown after the real backend plans when
- * NEXT_PUBLIC_MOCK_PLANS=true (currently on in .env.development AND .env.production, at the user's request,
- * so /pricing looks complete until real plans exist in the SortBoxs admin). They aren't backend plans:
+ * NEXT_PUBLIC_MOCK_PLANS=true (now off in .env.development and .env.production: real plans exist in the
+ * SortBoxs admin). They aren't backend plans:
  * Pay shows "coming soon — contact sales" instead of charging. Remove by setting the flag to false.
  */
 export const mockPlans: PricingPlan[] = [

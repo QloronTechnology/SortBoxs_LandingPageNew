@@ -19,8 +19,19 @@ interface RazorpayResponse {
   razorpay_signature: string;
 }
 
+/** Razorpay's `payment.failed` event (one per failed attempt; the window stays open for a retry). */
+export interface RazorpayFailure {
+  error: {
+    code?: string;
+    description?: string;
+    reason?: string;
+    metadata?: { order_id?: string; payment_id?: string };
+  };
+}
+
 interface RazorpayInstance {
   open: () => void;
+  on: (event: "payment.failed", handler: (response: RazorpayFailure) => void) => void;
 }
 
 declare global {
@@ -48,7 +59,15 @@ function loadScript() {
 }
 
 export type PaymentResult =
-  | { status: "paid"; orderId: string; paymentId: string; amount: number; demo?: boolean }
+  | {
+      status: "paid";
+      orderId: string;
+      paymentId: string;
+      /** Razorpay's signature over order + payment id; the backend verifies it. Backend orders only. */
+      signature?: string;
+      amount: number;
+      demo?: boolean;
+    }
   | { status: "dismissed" }
   | { status: "failed"; message: string };
 
@@ -105,12 +124,17 @@ async function payInDemoMode(checkout: CheckoutState, keyId: string): Promise<Pa
  * Opens Razorpay for an order our backend created (subscription checkout: createOrder). The window
  * collects the card/UPI/bank details; the amount comes from the order itself.
  *
- * TODO(backend): there is no payment-verification endpoint yet, so the signature Razorpay returns isn't
- * checked by the backend here — it has to confirm the payment itself (e.g. a Razorpay webhook).
+ * On success it resolves with Razorpay's order id, payment id and signature; the caller has the backend
+ * verify them (verify-payment) before treating the order as paid.
  */
 export async function openRazorpayOrder(
   order: { orderId: string; keyId: string; amount: number; currency: string },
-  details: { description: string; checkout: CheckoutState }
+  details: {
+    description: string;
+    checkout: CheckoutState;
+    /** Called for every failed attempt (card declined, UPI timed out, …) — the window stays open. */
+    onFailedAttempt?: (attempt: { orderId: string; paymentId: string; reason: string }) => void;
+  }
 ): Promise<PaymentResult> {
   try {
     await loadScript();
@@ -140,11 +164,19 @@ export async function openRazorpayOrder(
           status: "paid",
           orderId: response.razorpay_order_id,
           paymentId: response.razorpay_payment_id,
+          signature: response.razorpay_signature,
           amount: order.amount,
           demo: order.keyId.startsWith("rzp_test_"),
         }),
     });
     // A failed attempt keeps Razorpay's window open with the reason, so the customer can retry there.
+    razorpay.on("payment.failed", ({ error }) =>
+      details.onFailedAttempt?.({
+        orderId: error.metadata?.order_id ?? order.orderId,
+        paymentId: error.metadata?.payment_id ?? "",
+        reason: error.description ?? error.reason ?? "",
+      })
+    );
     razorpay.open();
   });
 }

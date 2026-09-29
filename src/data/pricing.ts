@@ -36,6 +36,8 @@ export interface PricingPlan {
   icon: LucideIcon;
   /** Per-user price in INR: per month (monthly) and per year (yearly). Omit for "Let's Talk" plans. */
   price?: Record<BillingCycle, number>;
+  /** Backend plans: the yearly discount already included in `price.yearly` (e.g. 20). */
+  yearlyDiscountPercent?: number;
   features: string[];
   /** No `href`: the button opens the checkout drawer for this plan. */
   cta: { label: string; href?: string };

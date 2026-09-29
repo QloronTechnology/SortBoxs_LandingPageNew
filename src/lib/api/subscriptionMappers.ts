@@ -17,7 +17,7 @@ function invalid(what: string, raw: unknown): never {
   throw new ApiError("invalid_response", `Unexpected ${what} response from the server.`, { details: raw });
 }
 
-/* ---- GET /cards/{id} ---- */
+/* ---- GET /cards ---- */
 
 export interface SubscriptionPlan {
   id: number;
@@ -26,8 +26,10 @@ export interface SubscriptionPlan {
   billingPlanType: BillingPlanType;
   /** Per-user monthly base price. */
   pricePerUser: number;
-  /** One user for `billingPlanType`'s period, before the backend's yearly discount. */
+  /** One user for `billingPlanType`'s period. For YEARLY the backend has already taken off the yearly discount. */
   totalAmount: number;
+  /** The yearly discount the backend applies (0 on MONTHLY). */
+  yearlyDiscountPercentage: number;
   /** App routes included in the plan, e.g. "/payroll". */
   modules: string[];
   /** Not sent by the backend yet. */
@@ -50,9 +52,43 @@ export function mapSubscriptionPlanResponse(raw: unknown): SubscriptionPlan {
     billingPlanType: data.billingPlanType === "YEARLY" ? "YEARLY" : "MONTHLY",
     pricePerUser,
     totalAmount,
+    yearlyDiscountPercentage: isNumber(toNumber(data.yearlyDiscountPercentage)) ? toNumber(data.yearlyDiscountPercentage) : 0,
     modules: Array.isArray(data.modules) ? data.modules.filter((m): m is string => typeof m === "string") : [],
     popular: typeof data.popular === "boolean" ? data.popular : undefined,
   };
+}
+
+/** The list endpoint. One malformed plan is skipped (and logged) rather than failing the whole page. */
+export function mapSubscriptionPlansResponse(raw: unknown): SubscriptionPlan[] {
+  if (!Array.isArray(raw)) invalid("subscription plans", raw);
+  return raw.flatMap((item) => {
+    try {
+      return [mapSubscriptionPlanResponse(item)];
+    } catch {
+      return [];
+    }
+  });
+}
+
+/* ---- POST coupon/apply ---- */
+
+export interface AppliedCouponQuote {
+  code: string;
+  /** e.g. 20 for 20%. */
+  discountPercentage: number;
+  message: string;
+}
+
+export function mapCouponResponse(raw: unknown): AppliedCouponQuote {
+  const data = (raw ?? {}) as Record<string, unknown>;
+  const percent = toNumber(data.discountPercentage);
+  const message = typeof data.message === "string" ? data.message : "";
+  if (data.valid !== true) {
+    // A 200 that still says "not valid": treat it like the 400 the backend normally sends.
+    throw new ApiError("validation", message || "This coupon code isn't valid.", { details: raw });
+  }
+  if (typeof data.couponCode !== "string" || !isNumber(percent)) invalid("coupon", raw);
+  return { code: data.couponCode, discountPercentage: percent, message };
 }
 
 /* ---- POST checkout/initiate ---- */
@@ -89,7 +125,9 @@ export function buildCheckoutPayload(checkout: CheckoutState): InitiateCheckoutR
   const gstin = checkout.hasTaxId ? checkout.taxId.trim() : "";
   return {
     subscriptionId,
-    userLimit: checkout.planUsers,
+    // The backend's userLimit is *additional* users on top of the one the plan price already covers
+    // (charged as price × (1 + userLimit)), so "5 users" in the drawer is userLimit 4.
+    userLimit: Math.max(0, checkout.planUsers - 1),
     billingPlanType: checkout.cycle === "yearly" ? "YEARLY" : "MONTHLY",
     couponCode: checkout.coupon ?? "",
     fullName: billing.fullName.trim(),
@@ -152,6 +190,39 @@ export function mapCheckoutResponse(raw: unknown): CheckoutQuote {
     taxAmount: num("taxAmount"),
     finalAmount,
     currency: typeof data.currency === "string" ? data.currency : "",
+  };
+}
+
+/* ---- POST verify-payment ---- */
+
+/**
+ * Sent to the backend after every payment attempt on a Razorpay order; the backend records it by outcome.
+ * SUCCESS: exactly what Razorpay Checkout's success handler returns. FAILED: from Razorpay's
+ * `payment.failed` event, which has no signature (sent as "").
+ */
+export interface VerifyPaymentRequest {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+  outcome: "SUCCESS" | "FAILED";
+}
+
+export interface PaymentVerification {
+  /** The backend confirmed the signature (and so the payment). */
+  verified: boolean;
+  message: string;
+  /** The backend's payment record id. */
+  paymentId: number | null;
+}
+
+/** 2xx replies. Anything but an explicit "FAILED" status counts as verified. */
+export function mapVerifyPaymentResponse(raw: unknown): PaymentVerification {
+  const data = (raw ?? {}) as Record<string, unknown>;
+  const status = typeof data.status === "string" ? data.status.toUpperCase() : "";
+  return {
+    verified: status !== "FAILED",
+    message: typeof data.message === "string" ? data.message : "",
+    paymentId: isNumber(toNumber(data.paymentId)) ? toNumber(data.paymentId) : null,
   };
 }
 

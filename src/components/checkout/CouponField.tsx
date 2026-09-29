@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { TicketPercent, TriangleAlert, X } from "lucide-react";
+import { LoaderCircle, TicketPercent, TriangleAlert, X } from "lucide-react";
 import { evaluateCoupon, findCoupon } from "@/data/coupons";
+import { isApiError } from "@/lib/api/apiClient";
+import { applyCoupon } from "@/lib/api/subscriptionApi";
 import { cn, formatINR } from "@/lib/utils";
 import { useCheckout, type AppliedCoupon } from "./CheckoutProvider";
 
@@ -35,12 +37,28 @@ function CouponForm() {
   const { state, totals, dispatch } = useCheckout();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
 
-  const apply = (event: FormEvent) => {
+  const apply = async (event: FormEvent) => {
     event.preventDefault();
-    // Subscription plans: the backend validates coupons at checkout — just carry the code.
+    const entered = code.trim().toUpperCase();
+    if (!entered || checking) return;
+    // Subscription plans: the coupon API checks the code and returns its discount. The backend applies
+    // it again (authoritatively) at checkout/initiate.
     if (totals.plan) {
-      if (code.trim()) dispatch({ type: "setCoupon", coupon: code.trim().toUpperCase() });
+      setChecking(true);
+      try {
+        const result = await applyCoupon(entered);
+        dispatch({ type: "setCoupon", coupon: result.code.toUpperCase(), percent: result.discountPercentage });
+      } catch (err) {
+        setError(
+          isApiError(err) && err.kind === "validation"
+            ? err.message
+            : "We couldn't check this code right now. Please try again."
+        );
+      } finally {
+        setChecking(false);
+      }
       return;
     }
     const coupon = findCoupon(code);
@@ -83,10 +101,16 @@ function CouponForm() {
         />
         <button
           type="submit"
-          disabled={!code.trim()}
-          className="h-11 shrink-0 rounded-lg bg-brand-purple px-5 text-sm font-semibold text-white outline-none hover:bg-brand-purple-dark focus-visible:ring-2 focus-visible:ring-brand-purple/60 disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={!code.trim() || checking}
+          className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg bg-brand-purple px-5 text-sm font-semibold text-white outline-none hover:bg-brand-purple-dark focus-visible:ring-2 focus-visible:ring-brand-purple/60 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Apply
+          {checking ? (
+            <>
+              <LoaderCircle className="size-4 animate-spin" aria-hidden /> Checking…
+            </>
+          ) : (
+            "Apply"
+          )}
         </button>
       </div>
       {error && (

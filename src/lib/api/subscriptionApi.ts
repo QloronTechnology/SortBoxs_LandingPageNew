@@ -2,13 +2,18 @@ import { apiClient } from "./apiClient";
 import { subscriptionEndpoints } from "./subscriptionEndpoints";
 import {
   mapCheckoutResponse,
+  mapCouponResponse,
   mapCreateOrderResponse,
-  mapSubscriptionPlanResponse,
+  mapSubscriptionPlansResponse,
+  mapVerifyPaymentResponse,
+  type AppliedCouponQuote,
   type BillingPlanType,
   type CheckoutQuote,
   type InitiateCheckoutRequest,
   type RazorpayOrder,
   type SubscriptionPlan,
+  type PaymentVerification,
+  type VerifyPaymentRequest,
 } from "./subscriptionMappers";
 
 /**
@@ -16,16 +21,29 @@ import {
  * errors arrive as `ApiError` (see apiClient). Orchestration (which call when) lives in the hooks.
  */
 
-export async function getSubscriptionCard(
+/** Every published plan, priced for one billing cycle, in the backend's order. */
+export async function getSubscriptionPlans(billingPlanType: BillingPlanType, signal?: AbortSignal): Promise<SubscriptionPlan[]> {
+  const { data } = await apiClient.get(subscriptionEndpoints.plans, { params: { billingPlanType }, signal });
+  return mapSubscriptionPlansResponse(data);
+}
+
+/** One plan for one cycle (the API answers with a one-item list); null when it doesn't exist. */
+export async function getSubscriptionPlan(
   subscriptionId: number | string,
   billingPlanType: BillingPlanType,
   signal?: AbortSignal
-): Promise<SubscriptionPlan> {
-  const { data } = await apiClient.get(subscriptionEndpoints.getSubscriptionCard(subscriptionId), {
-    params: { billingPlanType },
-    signal,
-  });
-  return mapSubscriptionPlanResponse(data);
+): Promise<SubscriptionPlan | null> {
+  const { data } = await apiClient.get(subscriptionEndpoints.plans, { params: { subscriptionId, billingPlanType }, signal });
+  return mapSubscriptionPlansResponse(data)[0] ?? null;
+}
+
+/**
+ * Checks a coupon code. Resolves with its discount when valid; an invalid or inactive code rejects with
+ * an ApiError (kind "validation") carrying the backend's message. Creates nothing on the backend.
+ */
+export async function applyCoupon(couponCode: string): Promise<AppliedCouponQuote> {
+  const { data } = await apiClient.post(subscriptionEndpoints.applyCoupon, { couponCode });
+  return mapCouponResponse(data);
 }
 
 export async function initiateCheckout(payload: InitiateCheckoutRequest): Promise<CheckoutQuote> {
@@ -38,4 +56,13 @@ export async function createRazorpayOrder(organizationSubscriptionId: number): P
     params: { orgSubId: organizationSubscriptionId },
   });
   return mapCreateOrderResponse(data);
+}
+
+/**
+ * Asks the backend to verify a Razorpay payment (signature check) and activate the subscription. A
+ * rejected verification comes back as an ApiError (e.g. 400/404 with { status: "FAILED", message }).
+ */
+export async function verifyPayment(payload: VerifyPaymentRequest): Promise<PaymentVerification> {
+  const { data } = await apiClient.post(subscriptionEndpoints.verifyPayment, payload);
+  return mapVerifyPaymentResponse(data);
 }

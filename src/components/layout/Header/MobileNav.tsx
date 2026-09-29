@@ -12,6 +12,7 @@ import { routes } from "@/config/routes";
 import { isNavItemActive } from "@/config/navigation";
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
+import { isTopLinkActive } from "../TopBarLinks";
 
 interface MobileNavProps {
   items: NavItem[];
@@ -193,7 +194,11 @@ export function MobileNav({ items }: MobileNavProps) {
                     href={link.href}
                     onClick={close}
                     tabIndex={isOpen ? undefined : -1}
-                    className="block rounded-lg px-2 py-2 text-sm text-brand-text hover:bg-brand-surface hover:text-brand-purple"
+                    aria-current={isTopLinkActive(link.href, pathname) ? "page" : undefined}
+                    className={cn(
+                      "block rounded-lg px-2 py-2 text-sm hover:bg-brand-surface hover:text-brand-purple",
+                      isTopLinkActive(link.href, pathname) ? "bg-brand-purple-light font-semibold text-brand-purple" : "text-brand-text"
+                    )}
                   >
                     {link.label}
                   </Link>

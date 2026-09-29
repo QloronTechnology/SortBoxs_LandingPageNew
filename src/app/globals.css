@@ -698,3 +698,47 @@ body {
     stroke-dashoffset: 0;
   }
 }
+
+/* About page story illustration: rises in (demo-rise) once scrolled into view (InView). */
+[data-inview="false"] .about-rise {
+  opacity: 0;
+}
+
+[data-inview="true"] .about-rise {
+  animation: demo-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-inview] .about-rise {
+    opacity: 1;
+    animation: none;
+  }
+}
+
+/* About hero dashboard (components/about/AboutHeroDashboard.tsx): replayed on every team switch. */
+.dash-in {
+  animation: demo-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both;
+}
+
+.dash-bar {
+  transform-origin: bottom;
+  animation: hl-grow 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both;
+}
+
+.dash-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: dash-draw 1s ease-out var(--d, 0ms) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-in,
+  .dash-bar {
+    animation: none;
+  }
+
+  .dash-line {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
