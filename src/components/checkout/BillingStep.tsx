@@ -1,6 +1,6 @@
 "use client";
 
-import { useImperativeHandle, useState, type ReactNode, type Ref } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from "react";
 import {
   Building2,
   Check,
@@ -10,9 +10,11 @@ import {
   FileText,
   Info,
   Landmark,
+  Loader2,
   LockKeyhole,
   Smartphone,
   User,
+  X,
 } from "lucide-react";
 import { billingCountries } from "@/data/billingTax";
 import { findPhoneCountry, phoneCountries, phoneError, sanitizePhoneNumber } from "@/data/phone";
@@ -24,6 +26,7 @@ import {
   sanitizePostal,
   upiLimit,
 } from "@/data/payment";
+import { checkDomainAvailability, sanitizeDomainInput } from "@/lib/domainCheck";
 import { formatRate } from "@/lib/tax";
 import { cn, formatINR } from "@/lib/utils";
 import { useCheckout, type CheckoutState, type CheckoutTotals, type PaymentMethodId } from "./CheckoutProvider";
@@ -46,6 +49,7 @@ const fieldOrder = [
   "bill-email",
   "bill-phone",
   "bill-company",
+  "bill-domain",
   "bill-region",
   "bill-line1",
   "bill-city",
@@ -67,6 +71,11 @@ function billingErrors(state: CheckoutState, totals: CheckoutTotals): Errors {
   if (!billing.email.trim()) errors["bill-email"] = "Enter your work email.";
   else if (!emailPattern.test(billing.email.trim())) errors["bill-email"] = "Enter a valid email address.";
   if (billing.customerType === "business" && !billing.company.trim()) errors["bill-company"] = "Enter your company name.";
+  if (!billing.domain.trim()) errors["bill-domain"] = "Enter your company domain.";
+  else if (billing.domainStatus === "unavailable") errors["bill-domain"] = "That domain is already taken.";
+  else if (billing.domainStatus === "invalid") errors["bill-domain"] = "Enter at least 3 letters, numbers or hyphens.";
+  else if (billing.domainStatus === "error") errors["bill-domain"] = "Couldn't check domain availability. Edit the domain to retry.";
+  else if (billing.domainStatus !== "available") errors["bill-domain"] = "Still checking domain availability.";
   if (!totals.locationComplete) errors["bill-region"] = `Select your ${(totals.country.regionLabel ?? "region").toLowerCase()}.`;
   if (!billing.line1.trim()) errors["bill-line1"] = "Enter your street address.";
   if (!billing.city.trim()) errors["bill-city"] = "Enter your city.";
@@ -95,6 +104,20 @@ export function BillingStep({ ref }: { ref?: Ref<BillingStepHandle> }) {
   const errorFor = (id: string) => ((showAll || touched.has(id)) && errors[id]) || undefined;
   const touch = (id: string) => setTouched((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
   const setBilling = (patch: Partial<CheckoutState["billing"]>) => dispatch({ type: "updateBilling", patch });
+
+  const domainCheckToken = useRef(0);
+  const domain = state.billing.domain;
+  useEffect(() => {
+    if (!domain) return;
+    const token = ++domainCheckToken.current;
+    setBilling({ domainStatus: "checking" });
+    const timer = setTimeout(async () => {
+      const result = await checkDomainAvailability(domain);
+      if (domainCheckToken.current === token) setBilling({ domainStatus: result });
+    }, 450);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [domain]);
 
   useImperativeHandle(ref, () => ({
     validate: () => {
@@ -169,8 +192,72 @@ export function BillingStep({ ref }: { ref?: Ref<BillingStepHandle> }) {
         </div>
       </Section>
 
-      {/* 2 — Billing address */}
-      <Section index={2} title="Billing Address" subtitle="This information is used for invoicing and tax calculation.">
+      {/* 2 — Company domain */}
+      <Section index={2} title="Company Domain" subtitle="This will be used for your team's login URL.">
+        <Field
+          id="bill-domain"
+          label="Workspace Domain"
+          required
+          error={state.billing.domain.trim() ? undefined : errorFor("bill-domain")}
+        >
+          <div
+            className={cn(
+              "flex h-11 w-full max-w-md items-center rounded-lg border bg-white pl-3 text-[15px] focus-within:border-brand-purple focus-within:ring-2 focus-within:ring-brand-purple/30",
+              (showAll || touched.has("bill-domain")) &&
+                (state.billing.domainStatus === "unavailable" || state.billing.domainStatus === "invalid")
+                ? "border-red-400"
+                : "border-brand-border"
+            )}
+          >
+            <span className="shrink-0 text-brand-muted">https://</span>
+            <input
+              id="bill-domain"
+              value={state.billing.domain}
+              onChange={(e) => setBilling({ domain: sanitizeDomainInput(e.target.value) })}
+              onBlur={() => touch("bill-domain")}
+              placeholder="yourcompany"
+              autoComplete="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              className="min-w-0 flex-1 bg-transparent px-1 text-brand-text outline-none placeholder:text-brand-muted/70"
+              aria-describedby="bill-domain-status"
+            />
+            <span className="shrink-0 pr-3 text-brand-muted">.sortboxs.com</span>
+          </div>
+          {state.billing.domain.trim() && (
+            <div id="bill-domain-status" className="mt-1.5 flex min-h-5 items-center gap-1.5 text-sm" aria-live="polite">
+              {state.billing.domainStatus === "checking" && (
+                <span className="flex items-center gap-1.5 text-brand-muted">
+                  <Loader2 className="size-3.5 animate-spin" aria-hidden /> Checking...
+                </span>
+              )}
+              {state.billing.domainStatus === "available" && (
+                <span className="flex items-center gap-1.5 font-medium text-emerald-600">
+                  <Check className="size-4" aria-hidden /> Available
+                </span>
+              )}
+              {state.billing.domainStatus === "unavailable" && (
+                <span className="flex items-center gap-1.5 font-medium text-red-600">
+                  <X className="size-4" aria-hidden /> That domain is already taken
+                </span>
+              )}
+              {state.billing.domainStatus === "invalid" && (
+                <span className="flex items-center gap-1.5 font-medium text-red-600">
+                  <CircleAlert className="size-4" aria-hidden /> Enter at least 3 letters, numbers or hyphens
+                </span>
+              )}
+              {state.billing.domainStatus === "error" && (
+                <span className="flex items-center gap-1.5 font-medium text-red-600">
+                  <CircleAlert className="size-4" aria-hidden /> Couldn&apos;t check availability. Edit the domain to retry.
+                </span>
+              )}
+            </div>
+          )}
+        </Field>
+      </Section>
+
+      {/* 3 — Billing address */}
+      <Section index={3} title="Billing Address" subtitle="This information is used for invoicing and tax calculation.">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field id="bill-country" label="Country / Region" required>
             <Combobox
@@ -248,8 +335,8 @@ export function BillingStep({ ref }: { ref?: Ref<BillingStepHandle> }) {
         </label>
       </Section>
 
-      {/* 3 — Tax */}
-      <Section index={3} title="Tax Information" subtitle="Help us determine the applicable tax for your purchase.">
+      {/* 4 — Tax */}
+      <Section index={4} title="Tax Information" subtitle="Help us determine the applicable tax for your purchase.">
         <div role="radiogroup" aria-label="Purchasing as" className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:max-w-lg">
           {(
             [
@@ -317,8 +404,8 @@ export function BillingStep({ ref }: { ref?: Ref<BillingStepHandle> }) {
         <TaxPreview />
       </Section>
 
-      {/* 4 — Payment */}
-      <Section index={4} title="Payment Method" subtitle="Secure and encrypted payments powered by Razorpay.">
+      {/* 5 — Payment */}
+      <Section index={5} title="Payment Method" subtitle="Secure and encrypted payments powered by Razorpay.">
         <div role="radiogroup" aria-label="Payment method" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {availablePaymentMethods(state.country, totals.total).map(({ id, label }) => {
             const active = method === id;
@@ -513,6 +600,7 @@ function Field({
   required,
   optional,
   error,
+  className,
   children,
 }: {
   id: string;
@@ -520,10 +608,11 @@ function Field({
   required?: boolean;
   optional?: boolean;
   error?: string;
+  className?: string;
   children: ReactNode;
 }) {
   return (
-    <div className="min-w-0">
+    <div className={cn("min-w-0", className)}>
       <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-brand-text">
         {label}
         {required && <span className="text-red-500"> *</span>}

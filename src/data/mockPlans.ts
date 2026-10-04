@@ -25,7 +25,7 @@ export const mockPlans: PricingPlan[] = [
     price: { monthly: 7999, yearly: 89999 },
     features: ["CRM", "Sales", "Marketing", "Customer Support", "Automation", "Reports", "Dashboards"],
     cta: { label: "Get Started" },
-    popular: true,
+    tag: "Most Popular",
   },
   {
     id: "mock-business",

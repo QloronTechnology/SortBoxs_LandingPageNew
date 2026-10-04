@@ -6,8 +6,8 @@ import { usePricingPlans } from "./usePricingPlans";
 
 /**
  * "Compare Plans" feature matrix, built from the backend plans' modules (admins create plans, so there's
- * no fixed table). Rows are every module any plan includes; Enterprise includes everything. Hidden until
- * the plans load. Scrolls horizontally on narrow screens.
+ * no fixed table), plus the fixed Enterprise column (which includes everything) — same pairing as the
+ * cards above. Hidden until the plans load. Scrolls horizontally on narrow screens.
  */
 export function PlanComparison() {
   const plans = usePricingPlans();
@@ -15,8 +15,8 @@ export function PlanComparison() {
 
   const features = [...new Set(plans.plans.flatMap((plan) => plan.features))];
   const columns = [
-    ...plans.plans.map((plan) => ({ name: plan.name, has: (feature: string) => plan.features.includes(feature) })),
-    { name: enterprisePlan.name, has: () => true },
+    ...plans.plans.map((plan) => ({ key: plan.id, name: plan.name, has: (feature: string) => plan.features.includes(feature) })),
+    { key: enterprisePlan.id, name: enterprisePlan.name, has: () => true },
   ];
 
   return (
@@ -37,7 +37,7 @@ export function PlanComparison() {
                 </th>
                 {columns.map((column) => (
                   <th
-                    key={column.name}
+                    key={column.key}
                     scope="col"
                     className="border-l border-brand-border px-4 py-4 text-center text-base font-medium text-brand-text sm:text-lg"
                   >
@@ -53,7 +53,7 @@ export function PlanComparison() {
                     {feature}
                   </th>
                   {columns.map((column) => (
-                    <td key={column.name} className="border-l border-brand-border px-4 py-2 text-center">
+                    <td key={column.key} className="border-l border-brand-border px-4 py-2 text-center">
                       {column.has(feature) ? (
                         <Check className="mx-auto size-4 text-brand-purple" strokeWidth={2.5} aria-label="Included" />
                       ) : (

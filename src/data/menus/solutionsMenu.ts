@@ -42,18 +42,30 @@ export const solutionsMenu = {
     {
       title: "Sales",
       description: "Close more deals and grow revenue.",
-      href: routes.platform.sales,
+      href: routes.solutions.sales,
       icon: BadgePercent,
       tone: "orange",
-      links: placeholder(["Sales Automation", "Pipeline Management", "Quotes & Orders", "Sales Analytics", "Territory Management"]),
+      links: [
+        { label: "Sales Automation", href: routes.solutions.salesAutomation },
+        { label: "Pipeline Management", href: routes.solutions.pipelineManagement },
+        { label: "Quotes & Orders", href: routes.solutions.quotesOrders },
+        { label: "Sales Analytics", href: routes.solutions.salesAnalytics },
+        { label: "Territory Management", href: routes.solutions.territoryManagement },
+      ],
     },
     {
       title: "Customer Service",
       description: "Deliver exceptional support experiences.",
-      href: routes.platform.service,
+      href: routes.solutions.customerService,
       icon: Headphones,
       tone: "sky",
-      links: placeholder(["Ticket Management", "Knowledge Base", "SLA Management", "Omnichannel Support", "Customer Insights"]),
+      links: [
+        { label: "Ticket Management", href: routes.solutions.ticketManagement },
+        { label: "Knowledge Base", href: routes.solutions.knowledgeBase },
+        { label: "SLA Management", href: routes.solutions.slaManagement },
+        { label: "Omnichannel Support", href: routes.solutions.omnichannelSupport },
+        { label: "Customer Insights", href: routes.solutions.customerInsights },
+      ],
     },
     {
       title: "HR & People",
@@ -74,10 +86,16 @@ export const solutionsMenu = {
     {
       title: "Marketing",
       description: "Attract, engage and grow your brand.",
-      href: routes.platform.marketing,
+      href: routes.solutions.marketing,
       icon: Megaphone,
       tone: "green",
-      links: placeholder(["Campaign Management", "Lead Generation", "Email Marketing", "Customer Journey", "Marketing Analytics"]),
+      links: [
+        { label: "Campaign Management", href: routes.solutions.campaignManagement },
+        { label: "Lead Generation", href: routes.solutions.leadGeneration },
+        { label: "Email Marketing", href: routes.solutions.emailMarketing },
+        { label: "Customer Journey", href: routes.solutions.customerJourney },
+        { label: "Marketing Analytics", href: routes.solutions.marketingAnalytics },
+      ],
     },
     {
       title: "Projects",

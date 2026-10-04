@@ -1,5 +1,5 @@
 import { Building2, Crown, Gem, Rocket, Send, type LucideIcon } from "lucide-react";
-import { enterprisePlan, type PricingPlan } from "@/data/pricing";
+import type { PricingPlan } from "@/data/pricing";
 import { getSubscriptionPlans } from "@/lib/api/subscriptionApi";
 import type { SubscriptionPlan } from "@/lib/api/subscriptionMappers";
 
@@ -7,20 +7,14 @@ import type { SubscriptionPlan } from "@/lib/api/subscriptionMappers";
 const withMockPlans = process.env.NEXT_PUBLIC_MOCK_PLANS === "true";
 
 /**
- * Subscription plans are created in the SortBoxs admin, so /pricing and the checkout load them at runtime
- * (this site is a static export: a new plan shows up without a redeploy). Enterprise is not a backend
- * plan — it stays the fixed "Contact Sales" card in `data/pricing.ts`.
+ * Subscription plans — including Enterprise — are created in the SortBoxs admin, so /pricing and the
+ * checkout load them all at runtime (this site is a static export: a new plan shows up without a
+ * redeploy).
  *
  * HTTP goes through `lib/api/subscriptionApi.ts`; this file turns backend plans into pricing-card models
  * and shares them between /pricing and the checkout. Every published plan is shown, in the backend's
  * order: the list is loaded once per billing cycle (2 requests) and paired up by subscriptionId.
- *
- * One exception: a backend plan with the same name as the fixed Enterprise card ("Enterprise") isn't
- * shown as a second card — Enterprise stays the "Contact Sales" card (the user's decision). Remove
- * `hiddenPlanNames` to sell it online instead.
  */
-
-const hiddenPlanNames = new Set([enterprisePlan.name.trim().toLowerCase()]);
 
 const icons: LucideIcon[] = [Send, Crown, Building2, Rocket, Gem];
 
@@ -52,6 +46,11 @@ export function moduleFeatures(modules: string[] = []) {
   return modules.map((route) => moduleNames[route] ?? route.replace(/^\//, "").replace(/^./, (c) => c.toUpperCase()));
 }
 
+/** "MOST_POPULAR" → "Most Popular". */
+function humanizeTag(tagName: string) {
+  return tagName.toLowerCase().replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 function toPricingPlan(monthly: SubscriptionPlan, yearly: SubscriptionPlan, index: number): PricingPlan {
   return {
     id: String(monthly.id),
@@ -64,7 +63,8 @@ function toPricingPlan(monthly: SubscriptionPlan, yearly: SubscriptionPlan, inde
     yearlyDiscountPercent: yearly.yearlyDiscountPercentage,
     features: moduleFeatures(monthly.modules),
     cta: { label: "Get Started" },
-    popular: monthly.popular,
+    tag: monthly.tagName ? humanizeTag(monthly.tagName) : undefined,
+    includes: monthly.includes ?? undefined,
   };
 }
 
@@ -75,7 +75,6 @@ export async function fetchPlans(): Promise<PricingPlan[]> {
     const [monthly, yearly] = await Promise.all([getSubscriptionPlans("MONTHLY"), getSubscriptionPlans("YEARLY")]);
     const yearlyById = new Map(yearly.map((plan) => [plan.id, plan]));
     plans = monthly
-      .filter((plan) => !hiddenPlanNames.has(plan.name.trim().toLowerCase()))
       .flatMap((month) => {
         const year = yearlyById.get(month.id);
         // A plan without a yearly price can't be shown on the Monthly/Yearly toggle.

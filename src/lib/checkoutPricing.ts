@@ -7,6 +7,7 @@ import type { BillingCycle, PricingPlan } from "@/data/pricing";
 import { defaultPhoneCountry } from "@/data/phone";
 import { findLoadedPlan } from "@/lib/plansApi";
 import { findCountry, quoteTax, validateTaxId, type TaxQuote } from "@/lib/tax";
+import type { DomainStatus } from "@/lib/domainCheck";
 
 /**
  * Checkout state and pricing — pure (no React). Plans come from the backend (`lib/plansApi.ts`); the
@@ -43,6 +44,9 @@ export type PaymentMethodId = "card" | "upi" | "netbanking" | "invoice";
 export interface BillingDetails {
   fullName: string;
   email: string;
+  /** The workspace's login URL: "<domain>.sortboxs.com". */
+  domain: string;
+  domainStatus: DomainStatus;
   company: string;
   customerType: "business" | "individual";
   line1: string;
@@ -80,6 +84,8 @@ export function initialCheckoutState(): CheckoutState {
     billing: {
       fullName: "",
       email: "",
+      domain: "",
+      domainStatus: "idle",
       company: "",
       customerType: "business",
       line1: "",

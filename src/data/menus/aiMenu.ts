@@ -58,9 +58,9 @@ export const aiMenu = {
       items: [
         { label: "Sortboxs AI Assistant", description: "Your intelligent assistant across all modules.", href: routes.platform.ai, icon: Bot, tone: "green" },
         { label: "AI Interview", description: "AI-powered candidate screening and interviews.", href: routes.platform.aiInterview, icon: UserSearch, tone: "orange" },
-        { label: "AI Agents", description: "Automate repetitive tasks with intelligent agents.", href: "#", icon: Sparkles, tone: "sky" },
-        { label: "AI Analytics", description: "Turn data into insights with AI.", href: "#", icon: ChartColumn, tone: "teal" },
-        { label: "AI Search", description: "Find information across your business instantly.", href: "#", icon: Search, tone: "pink" },
+        { label: "AI Agents", description: "Automate repetitive tasks with intelligent agents.", href: routes.platform.aiAgents, icon: Sparkles, tone: "sky" },
+        { label: "AI Analytics", description: "Turn data into insights with AI.", href: routes.platform.aiAnalytics, icon: ChartColumn, tone: "teal" },
+        { label: "AI Search", description: "Find information across your business instantly.", href: routes.platform.aiSearch, icon: Search, tone: "pink" },
         { label: "AI Workflows", description: "Build and automate workflows using AI.", href: "#", icon: Workflow, tone: "purple" },
         { label: "AI Studio (Beta)", description: "Create, customize and deploy your own AI models.", href: "#", icon: Box, tone: "red" },
       ],
@@ -68,14 +68,14 @@ export const aiMenu = {
     {
       heading: "AI Capabilities",
       items: [
-        { label: "Natural Lang. Processing", description: "Interact with your data in natural language.", href: "#", icon: MessageSquareText, tone: "green" },
+        { label: "Natural Lang. Processing", description: "Interact with your data in natural language.", href: routes.platform.nlp, icon: MessageSquareText, tone: "green" },
         { label: "Predictive Analytics", description: "Forecast trends and make proactive decisions.", href: "#", icon: ChartLine, tone: "orange" },
-        { label: "Intelligent Automation", description: "Automate processes and reduce manual work.", href: "#", icon: Settings, tone: "sky" },
-        { label: "AI Recommendations", description: "Get personalized suggestions and next steps.", href: "#", icon: Lightbulb, tone: "teal" },
+        { label: "Intelligent Automation", description: "Automate processes and reduce manual work.", href: routes.platform.intelligentAutomation, icon: Settings, tone: "sky" },
+        { label: "AI Recommendations", description: "Get personalized suggestions and next steps.", href: routes.platform.aiRecommendations, icon: Lightbulb, tone: "teal" },
         { label: "Document Intelligence", description: "Extract and understand information from documents.", href: "#", icon: FileText, tone: "pink" },
-        { label: "Computer Vision", description: "Analyze images and documents with AI.", href: "#", icon: Eye, tone: "purple" },
-        { label: "Speech-to-Text", description: "Convert voice to text for faster input.", href: "#", icon: AudioLines, tone: "red" },
-        { label: "Text-to-Speech", description: "Turn text into natural voice responses.", href: "#", icon: Volume2, tone: "green" },
+        { label: "Computer Vision", description: "Analyze images and documents with AI.", href: routes.platform.computerVision, icon: Eye, tone: "purple" },
+        { label: "Speech-to-Text", description: "Convert voice to text for faster input.", href: routes.platform.speech, icon: AudioLines, tone: "red" },
+        { label: "Text-to-Speech", description: "Turn text into natural voice responses.", href: routes.platform.speech, icon: Volume2, tone: "green" },
       ],
     },
     {

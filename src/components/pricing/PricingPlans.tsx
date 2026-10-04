@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, RotateCw } from "lucide-react";
+import { Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Crown, RotateCw } from "lucide-react";
 import { enterprisePlan, yearlySavingsLabel, type BillingCycle, type PricingPlan } from "@/data/pricing";
 import { routes } from "@/config/routes";
 import { loadPlans } from "@/lib/plansApi";
@@ -10,15 +10,15 @@ import { cn, formatINR } from "@/lib/utils";
 import { CheckoutTrigger } from "@/components/checkout/CheckoutTrigger";
 import { usePricingPlans } from "./usePricingPlans";
 
-const cycles: { value: BillingCycle; label: string }[] = [
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
+const cycles: { value: BillingCycle; label: string; description: string }[] = [
+  { value: "monthly", label: "Monthly", description: "Pay every month" },
+  { value: "yearly", label: "Yearly", description: "Pay once a year" },
 ];
 
-/** The design's row: 4 cards (3 plans + Enterprise), centred when there are fewer. */
+/** The design's row: 4 cards (backend plans + the fixed Enterprise card), centred when there are fewer. */
 const cardWidth = "w-full md:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-3.75rem)/4)]";
 
-/** Backend plans that fit next to Enterprise on desktop; more than this and they become a slider. */
+/** Backend plans that fit next to the fixed Enterprise card on desktop; more than this and they slide. */
 const visiblePlans = 3;
 
 /**
@@ -131,9 +131,9 @@ export function PricingPlans() {
   const yearlyBadge = savings.length
     ? `Save ${new Set(savings).size > 1 ? "up to " : ""}${Math.max(...savings)}%`
     : yearlySavingsLabel;
-  // The hovered/focused card is highlighted; with none, the "Most Popular" plan is.
+  // The hovered/focused card is highlighted; with none, the "Most Popular" plan is (else the first tagged one).
   const [hovered, setHovered] = useState<string | null>(null);
-  const highlighted = hovered ?? allPlans.find((plan) => plan.popular)?.id;
+  const highlighted = hovered ?? (allPlans.find((plan) => plan.tag === "Most Popular") ?? allPlans.find((plan) => plan.tag))?.id;
 
   const cardProps = (plan: PricingPlan, index: number) => ({
     plan,
@@ -145,43 +145,72 @@ export function PricingPlans() {
   });
 
   return (
-    <section className="bg-white pb-12">
+    <section className="bg-white pt-14 pb-12">
       <div className="container-page">
-        {/* Sized to the design: 490×72 white card, 280×50 pill (two 140px buttons), badge on the pill's corner. */}
-        <div className="relative z-10 -mt-9 flex justify-center">
-          <div className="flex h-[72px] w-full max-w-[490px] items-center rounded-3xl bg-white px-3 shadow-[0_10px_30px_-10px_rgba(23,22,92,0.2)] sm:pl-[65px]">
-            <div
-              role="group"
-              aria-label="Billing cycle"
-              className="relative grid h-[50px] w-full grid-cols-2 rounded-full border border-brand-border bg-[#f4f3fd] sm:w-[280px]"
-            >
-              {cycles.map(({ value, label }) => {
+        {/* Billing selector: exactly two bordered layers (outer frame, inner pill). The selected option is
+            only a filled background + subtle shadow inside the inner layer — never a third border — and the
+            whole control stays horizontal at every width, with the savings badge overlapping its right edge. */}
+        <div className="relative z-10 flex items-center justify-center gap-0 px-4">
+          {/* Outer border layer. */}
+          <div className="inline-flex max-w-full rounded-full border-2 border-[#ece8fc] bg-white p-2 shadow-[0_4px_10px_-6px_rgba(108,53,245,0.18)]">
+            {/* Inner border layer — a small, consistent gap from the outer border (the outer's padding);
+                the selected option sits with the same normal inset from the inner border, not a floating island. */}
+            <div role="group" aria-label="Billing cycle" className="flex items-stretch rounded-full border border-[#ddd6f9] bg-white p-1">
+              {cycles.map(({ value, label, description }, index) => {
                 const active = cycle === value;
                 return (
-                  <button
-                    key={value}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setCycle(value)}
-                    className={cn(
-                      "rounded-full text-base font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60 sm:text-lg",
-                      active ? "bg-brand-purple text-white shadow-sm" : "text-brand-purple hover:bg-white/60"
-                    )}
-                  >
-                    {label}
-                  </button>
+                  <div key={value} className="flex h-8 items-stretch sm:h-12">
+                    {index > 0 && <span className="mx-0.5 w-px shrink-0 self-stretch bg-[#e4e0fb] sm:mx-1" aria-hidden />}
+                    <button
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setCycle(value)}
+                      className={cn(
+                        "flex h-full items-center gap-1.5 rounded-full px-2.5 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60 sm:gap-2.5 sm:px-5",
+                        active ? "bg-gradient-to-br from-brand-purple to-[#4c1fc7] shadow-sm shadow-brand-purple/25" : "hover:bg-brand-purple-light/30"
+                      )}
+                    >
+                      <Calendar className={cn("size-3.5 shrink-0 sm:size-5", active ? "text-white" : "text-[#6b6f8a]")} aria-hidden />
+                      <span className="min-w-0">
+                        <span className={cn("block text-xs font-bold whitespace-nowrap sm:text-base", active ? "text-white" : "text-brand-navy")}>
+                          {label}
+                        </span>
+                        <span
+                          className={cn(
+                            "hidden text-xs whitespace-nowrap sm:block",
+                            active ? "text-white/75" : "text-brand-muted"
+                          )}
+                        >
+                          {description}
+                        </span>
+                      </span>
+                    </button>
+                  </div>
                 );
               })}
-              <span className="absolute -top-2.5 right-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-medium whitespace-nowrap text-emerald-700 sm:top-0 sm:-right-[80px] sm:text-xs">
-                {yearlyBadge}
-              </span>
             </div>
+          </div>
+
+          {/* Badge: a CSS triangle gives it the speech-bubble tail pointing into the toggle, then it
+              overlaps the outer frame's right edge (-ml, lower z-index) without hiding either border. */}
+          <div className="relative z-0 -ml-3 flex shrink-0 items-center sm:-ml-4">
+            <span aria-hidden className="h-0 w-0 border-y-[9px] border-r-[9px] border-y-transparent border-r-emerald-100 sm:border-y-[12px] sm:border-r-[12px]" />
+            <span className="flex items-center gap-1 rounded-r-xl bg-emerald-100 py-1.5 pr-2.5 pl-1 text-xs font-bold whitespace-nowrap text-emerald-700 shadow-sm sm:gap-1.5 sm:py-2 sm:pr-4 sm:text-sm">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-200/70 sm:size-6">
+                <Crown className="size-3 sm:size-3.5" aria-hidden />
+              </span>
+              {yearlyBadge}
+            </span>
+            {/* Small decorative accent strokes, same flourish as the reference. */}
+            <span aria-hidden className="absolute top-0.5 right-2 hidden h-2.5 w-0.5 -translate-y-2 -rotate-12 rounded-full bg-emerald-400 sm:block" />
+            <span aria-hidden className="absolute top-0.5 right-0.5 hidden h-3 w-0.5 -translate-y-2.5 rounded-full bg-emerald-400 sm:block" />
+            <span aria-hidden className="absolute top-0.5 -right-1 hidden h-2.5 w-0.5 -translate-y-2 rotate-12 rounded-full bg-emerald-400 sm:block" />
           </div>
         </div>
 
         <div className="mt-8" onMouseLeave={() => setHovered(null)} aria-busy={plans.status === "loading"}>
           {apiPlans.length > visiblePlans ? (
-            // More plans than fit: the backend plans slide, Enterprise stays put on the right.
+            // More backend plans than fit next to it: they slide, Enterprise stays put on the right.
             <div className="flex flex-col gap-5 lg:flex-row">
               <PlanSlider label="Subscription plans">
                 {apiPlans.map((plan, index) => (
@@ -271,7 +300,7 @@ function PlanCard({
   /** Width, set by the layout (centred row or slider). */
   className?: string;
 }) {
-  const { id, name, description, icon: Icon, price, features, cta, popular, yearlyDiscountPercent } = plan;
+  const { id, name, description, icon: Icon, price, features, cta, tag, includes, yearlyDiscountPercent } = plan;
   // Yearly on a discounted backend plan: show 12 × the monthly price struck through, and the saving.
   const yearlyList = cycle === "yearly" && price && yearlyDiscountPercent ? price.monthly * 12 : null;
   const ctaClass = cn(
@@ -295,9 +324,9 @@ function PlanCard({
           : "border-brand-border"
       )}
     >
-      {popular && (
+      {tag && (
         <span className="absolute top-4 right-4 rounded-md bg-brand-purple px-2.5 py-1 text-xs font-semibold tracking-wide text-white uppercase">
-          Most Popular
+          {tag}
         </span>
       )}
 
@@ -335,6 +364,8 @@ function PlanCard({
           <span className="text-4xl font-bold text-brand-text lg:text-3xl 2xl:text-4xl">Let&apos;s Talk</span>
         )}
       </p>
+
+      {includes && <p className="mt-3 text-xs font-semibold text-brand-purple">{includes}</p>}
 
       {/* Fixed height, so all cards match; the CTA's mt-auto pins it to the card bottom. */}
       <FeatureList features={features} />

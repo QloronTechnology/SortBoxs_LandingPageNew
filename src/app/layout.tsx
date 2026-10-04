@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header/Header";
 import { Footer } from "@/components/layout/Footer/Footer";
 import { CookieConsent } from "@/components/layout/CookieConsent";
 import { BookDemoHost } from "@/components/demo/BookDemoModal";
+import { StartFreeDrawerHost } from "@/components/start-free/StartFreeDrawer";
 import { site } from "@/config/site";
 import "./globals.css";
 
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Footer />
         <CookieConsent />
         <BookDemoHost />
+        <StartFreeDrawerHost />
       </body>
     </html>
   );

@@ -6,6 +6,7 @@ import {
   mapCreateOrderResponse,
   mapSubscriptionPlansResponse,
   mapVerifyPaymentResponse,
+  mapWorkspaceDomainResponse,
   type AppliedCouponQuote,
   type BillingPlanType,
   type CheckoutQuote,
@@ -14,6 +15,7 @@ import {
   type SubscriptionPlan,
   type PaymentVerification,
   type VerifyPaymentRequest,
+  type WorkspaceDomainCheck,
 } from "./subscriptionMappers";
 
 /**
@@ -65,4 +67,10 @@ export async function createRazorpayOrder(organizationSubscriptionId: number): P
 export async function verifyPayment(payload: VerifyPaymentRequest): Promise<PaymentVerification> {
   const { data } = await apiClient.post(subscriptionEndpoints.verifyPayment, payload);
   return mapVerifyPaymentResponse(data);
+}
+
+/** Whether `workspaceDomain` (the part before ".sortboxs.com") is free to register. */
+export async function checkWorkspaceDomain(workspaceDomain: string, signal?: AbortSignal): Promise<WorkspaceDomainCheck> {
+  const { data } = await apiClient.get(subscriptionEndpoints.checkWorkspaceDomain, { params: { workspaceDomain }, signal });
+  return mapWorkspaceDomainResponse(data);
 }

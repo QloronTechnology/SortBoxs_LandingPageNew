@@ -41,27 +41,15 @@ export interface PricingPlan {
   features: string[];
   /** No `href`: the button opens the checkout drawer for this plan. */
   cta: { label: string; href?: string };
-  popular?: boolean;
+  /** Badge label, e.g. "Most Popular" — from the backend's tagName, already humanized for display. */
+  tag?: string;
+  /** e.g. "Everything in Starter" — shown above the feature list when the backend sends one. */
+  includes?: string;
 }
 
-export const pricingHero = {
-  eyebrow: "Simple. Flexible. Powerful",
-  title: "Plans that scale with",
-  highlight: "your business",
-  description: "Powerful business tools designed to grow with your organization.",
-  points: [
-    { label: "No long-term contract", icon: FileX2 },
-    { label: "14-day free trial", icon: CalendarCheck },
-    { label: "Upgrade anytime", icon: FileUp },
-  ],
-};
-
-/** Badge on the Yearly toggle (copy from the design). */
-export const yearlySavingsLabel = "Save up to 20%";
-
 /**
- * The subscription plans (Starter, Professional, …) are created in the SortBoxs admin and loaded at runtime
- * (`lib/plansApi.ts`). Enterprise isn't a backend plan: it's this fixed card, always shown last.
+ * Fixed "Contact Sales" card, always shown last alongside whatever plans the backend publishes
+ * (including its own priced "Enterprise" plan, if any — the two are independent, by design).
  */
 export const enterprisePlan: PricingPlan = {
   id: "enterprise",
@@ -82,6 +70,21 @@ export const enterprisePlan: PricingPlan = {
   /** Opens the Book a Demo modal. */
   cta: { label: "Contact Sales", href: routes.demo },
 };
+
+export const pricingHero = {
+  eyebrow: "Simple. Flexible. Powerful",
+  title: "Plans that scale with",
+  highlight: "your business",
+  description: "Powerful business tools designed to grow with your organization.",
+  points: [
+    { label: "No long-term contract", icon: FileX2 },
+    { label: "14-day free trial", icon: CalendarCheck },
+    { label: "Upgrade anytime", icon: FileUp },
+  ],
+};
+
+/** Badge on the Yearly toggle (copy from the design). */
+export const yearlySavingsLabel = "Save up to 20%";
 
 export interface PricingModule {
   name: string;

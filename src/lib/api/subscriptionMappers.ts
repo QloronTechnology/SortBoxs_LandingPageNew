@@ -12,6 +12,28 @@ export type BillingPlanType = "MONTHLY" | "YEARLY";
 const isNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 const toNumber = (value: unknown) => (isNumber(value) ? value : typeof value === "string" && value.trim() ? Number(value) : NaN);
 
+const htmlEntities: Record<string, string> = {
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&nbsp;": " ",
+};
+
+/**
+ * Plan `description`/`includes` come out of a rich-text editor in the admin, so the API sends HTML
+ * ("<p><span style=\"...\">For small teams…</span></p>") instead of plain text. This site only ever shows
+ * them as plain strings, so strip the markup here rather than rendering raw HTML from the backend.
+ */
+function stripHtml(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[a-z#0-9]+;/gi, (entity) => htmlEntities[entity.toLowerCase()] ?? entity)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function invalid(what: string, raw: unknown): never {
   console.error(`[subscriptionApi] unexpected ${what} response`, raw);
   throw new ApiError("invalid_response", `Unexpected ${what} response from the server.`, { details: raw });
@@ -32,8 +54,10 @@ export interface SubscriptionPlan {
   yearlyDiscountPercentage: number;
   /** App routes included in the plan, e.g. "/payroll". */
   modules: string[];
-  /** Not sent by the backend yet. */
-  popular?: boolean;
+  /** Badge the backend assigns, e.g. "MOST_POPULAR", "RECOMMENDED". Null when the plan has none. */
+  tagName: string | null;
+  /** e.g. "Everything in Starter" — shown above the feature list. Null when the plan has none. */
+  includes: string | null;
 }
 
 export function mapSubscriptionPlanResponse(raw: unknown): SubscriptionPlan {
@@ -48,13 +72,14 @@ export function mapSubscriptionPlanResponse(raw: unknown): SubscriptionPlan {
   return {
     id,
     name: data.name,
-    description: typeof data.description === "string" ? data.description : "",
+    description: typeof data.description === "string" ? stripHtml(data.description) : "",
     billingPlanType: data.billingPlanType === "YEARLY" ? "YEARLY" : "MONTHLY",
     pricePerUser,
     totalAmount,
     yearlyDiscountPercentage: isNumber(toNumber(data.yearlyDiscountPercentage)) ? toNumber(data.yearlyDiscountPercentage) : 0,
     modules: Array.isArray(data.modules) ? data.modules.filter((m): m is string => typeof m === "string") : [],
-    popular: typeof data.popular === "boolean" ? data.popular : undefined,
+    tagName: typeof data.tagName === "string" && data.tagName ? data.tagName : null,
+    includes: typeof data.includes === "string" && data.includes ? stripHtml(data.includes) : null,
   };
 }
 
@@ -257,4 +282,17 @@ export function mapCreateOrderResponse(raw: unknown): RazorpayOrder {
     paymentId: isNumber(toNumber(data.paymentId)) ? toNumber(data.paymentId) : null,
     status: typeof data.status === "string" ? data.status : "",
   };
+}
+
+/* ---- GET checkWorkSpaceDomain ---- */
+
+export interface WorkspaceDomainCheck {
+  available: boolean;
+  message: string;
+}
+
+export function mapWorkspaceDomainResponse(raw: unknown): WorkspaceDomainCheck {
+  const data = (raw ?? {}) as Record<string, unknown>;
+  if (typeof data.available !== "boolean") invalid("workspace domain", raw);
+  return { available: data.available, message: typeof data.message === "string" ? data.message : "" };
 }

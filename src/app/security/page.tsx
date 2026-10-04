@@ -1,24 +1,19 @@
 import type { Metadata } from "next";
 import { HomeSecurity } from "@/components/home/HomeSecurity";
-import { Section } from "@/components/ui/Section";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { ModuleLandingPage } from "@/components/module-landing/ModuleLandingPage";
+import { SecurityDashboard } from "@/components/module-landing/previews/dashboards/SecurityDashboard";
+import { securityLanding } from "@/data/landing/security";
 
 export const metadata: Metadata = {
-  title: "Security",
-  description: "Enterprise-grade security practices that protect your business data.",
+  title: "Enterprise Security",
+  description: securityLanding.hero.description,
 };
 
+/** Platform → Technology & Infrastructure → Enterprise Security. Ends with the certification band from the home page. */
 export default function SecurityPage() {
   return (
     <>
-      <Section className="bg-brand-surface">
-        <SectionHeader
-          align="center"
-          eyebrow="Security"
-          title="Enterprise-Grade Security"
-          description="Your data is protected with industry-leading security practices at every layer."
-        />
-      </Section>
+      <ModuleLandingPage data={securityLanding} preview={<SecurityDashboard />} />
       <HomeSecurity />
     </>
   );

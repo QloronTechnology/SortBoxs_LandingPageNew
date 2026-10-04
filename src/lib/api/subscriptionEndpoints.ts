@@ -22,4 +22,6 @@ export const subscriptionEndpoints = {
    * (404 { status: "FAILED", message: "Order not found: …" } for an unknown order).
    */
   verifyPayment: "/api/payment/verify-payment",
+  /** GET, params: { workspaceDomain } → { available, message }. 200 whether or not it's free. */
+  checkWorkspaceDomain: "/api/v1/auth/checkWorkSpaceDomain",
 } as const;

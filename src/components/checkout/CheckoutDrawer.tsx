@@ -115,7 +115,7 @@ function DrawerPanel({ onClose }: { onClose: () => void }) {
         aria-modal="true"
         aria-labelledby="drawer-title"
         tabIndex={-1}
-        className="drawer-in absolute inset-y-0 right-0 flex w-full max-w-[760px] flex-col bg-white shadow-2xl outline-none"
+        className="drawer-in absolute inset-y-0 right-0 flex w-full flex-col bg-white shadow-2xl outline-none lg:w-[50%]"
       >
         <header className="flex h-14 shrink-0 items-center justify-between gap-3 bg-brand-purple px-4 text-white sm:px-5">
           <p className="flex items-center gap-2 text-sm font-semibold">

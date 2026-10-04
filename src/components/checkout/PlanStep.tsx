@@ -50,9 +50,9 @@ export function PlanStep() {
                   : "border-brand-border bg-white hover:border-brand-purple/40"
               )}
             >
-              {option.popular && (
+              {option.tag && (
                 <span className="absolute -top-2 right-2 rounded bg-brand-purple px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-white uppercase sm:static sm:float-right sm:text-[10px]">
-                  Popular
+                  {option.tag}
                 </span>
               )}
               <span className="block truncate text-sm font-semibold text-brand-text sm:text-base">{option.name}</span>

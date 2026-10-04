@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
-import { ModulePage } from "@/components/module/ModulePage";
+import { ModuleLandingPage } from "@/components/module-landing/ModuleLandingPage";
+import { FinanceDashboard } from "@/components/module-landing/previews/dashboards/FinanceDashboard";
 import { financePage } from "@/data/modules/finance";
+import { financeLanding } from "@/data/landing/finance";
 
 export const metadata: Metadata = {
   title: "Finance",
   description: financePage.description,
 };
 
+/** Platform → Finance. The site header and footer (with its CTA) come from the root layout. */
 export default function FinancePage() {
-  return <ModulePage data={financePage} />;
+  return <ModuleLandingPage data={financeLanding} preview={<FinanceDashboard />} />;
 }
